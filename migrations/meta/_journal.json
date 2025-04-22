@@ -1,0 +1,27 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1744262060276,
+      "tag": "0000_uuid_v7",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1744416671299,
+      "tag": "0001_cloudy_vision",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1744423777876,
+      "tag": "0002_typical_iron_lad",
+      "breakpoints": true
+    }
+  ]
+}
