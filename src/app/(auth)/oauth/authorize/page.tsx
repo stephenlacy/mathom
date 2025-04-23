@@ -1,47 +1,109 @@
-import { Button } from "@/components/ui/button"
-import { auth } from "@/lib/auth"
 import { headers } from "next/headers"
-import Link from "next/link"
+import { auth } from "@/lib/auth"
 import { redirect } from "next/navigation"
+import { OauthAuthorize } from "./authorize"
+import { lookupClient } from "@/lib/oauth/helpers"
+import { db } from "@/db/drizzle"
 
-interface OAuthQueryParams {
-	response_type?: string
-	client_id?: string
-	code_challenge?: string
-	code_challenge_method?: string
-	redirect_uri?: string
-}
-
-export default async function OauthAuthorize({ searchParams }: { searchParams: OAuthQueryParams }) {
-	const session = await auth.api.getSession({ headers: await headers() })
-
-	if (!session?.user) {
-		return redirect("/sign-in")
+function parseParams(searchParams: { [key: string]: string | string[] | undefined }) {
+	// Helper to extract string values
+	const getParam = (key: string): string | undefined => {
+		const value = searchParams[key]
+		return typeof value === "string" ? value : Array.isArray(value) ? value[0] : undefined
 	}
 
-	const approve = async () => {}
-	const reject = async () => {}
+	return {
+		responseType: getParam("response_type"),
+		clientId: getParam("client_id"),
+		redirectUri: getParam("redirect_uri"),
+		scope: getParam("scope"),
+		state: getParam("state"),
+		codeChallenge: getParam("code_challenge"),
+		codeChallengeMethod: getParam("code_challenge_method"),
+	}
+}
+
+export default async function AuthorizePage({
+	searchParams,
+}: {
+	searchParams: Promise<{ [key: string]: string | string[] | undefined }>
+}) {
+	// Get current user session
+	const session = await auth.api.getSession({
+		headers: await headers(),
+	})
+
+	const searchParamValues = await searchParams
+
+	// Redirect to login if not authenticated
+	if (!session?.user) {
+		const returnTo = `/oauth/authorize?${new URLSearchParams(searchParamValues as Record<string, string>)}`
+		return redirect(`/sign-in?returnTo=${encodeURIComponent(returnTo)}`)
+	}
+
+	const params = parseParams(searchParamValues)
+
+	// Prepare URL for API authorization endpoint
+	const apiParams = new URLSearchParams()
+	Object.entries(params).forEach(([key, value]) => {
+		if (value) apiParams.set(key, value)
+	})
+
+	const approveUrl = `/api/oauth/authorize?${apiParams.toString()}`
+
+	// Prepare URL for rejection
+	let rejectUrl = "/"
+	if (params.redirectUri) {
+		try {
+			const errorUrl = new URL(params.redirectUri)
+			errorUrl.searchParams.set("error", "access_denied")
+			errorUrl.searchParams.set("error_description", "The user denied the authorization request")
+			if (params.state) {
+				errorUrl.searchParams.set("state", params.state)
+			}
+			rejectUrl = errorUrl.toString()
+		} catch (e) {
+			console.error("Invalid redirect URI:", e)
+		}
+	}
+
+	// Get client information
+	let clientName = "Unknown Application"
+	let scopes: string[] = []
+
+	if (params.clientId) {
+		try {
+			const client = await lookupClient(params.clientId)
+			if (client) {
+				clientName = client.clientName || `Client ${params.clientId}`
+			}
+		} catch (error) {
+			console.error("Error fetching client:", error)
+		}
+	}
+
+	// Parse scopes
+	if (params.scope) {
+		scopes = params.scope.split(" ")
+	}
+
+	// For client-side navigation
+	async function handleApprove() {
+		"use server"
+		return redirect(approveUrl)
+	}
+
+	async function handleDeny() {
+		"use server"
+		return redirect(rejectUrl)
+	}
 
 	return (
-		<main className="flex flex-1 flex-row font-[family-name:var(--font-geist-mono)]">
-			<div className="flex flex-col justify-center p-8 border-1 bg-accent/20 rounded-md gap-4">
-				<h2 className="text-2xl">Authorization Request</h2>
-				<p className="text-foreground/50">This is your workspace.</p>
-				<p className="text-foreground">Launch your first MCP server to get started.</p>
-
-				<div className="bg-accent/20 p-4 rounded-md text-sm font-mono text-foreground/80 border-1 border-solid border-accent">
-					<pre>mcx -y my-mcp-server</pre>
-				</div>
-
-				<Button variant="default" className="uppercase" onClick={() => approve()}>
-					Approve
-				</Button>
-				<Link href={searchParams.redirect_uri || "/"}>
-					<Button variant="destructive" className="uppercase">
-						Reject
-					</Button>
-				</Link>
-			</div>
-		</main>
+		<OauthAuthorize
+			clientName={clientName}
+			scopes={scopes}
+			approveAction={handleApprove}
+			denyAction={handleDeny}
+		/>
 	)
 }

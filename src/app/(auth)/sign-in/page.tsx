@@ -8,7 +8,6 @@ export default async function SignIn() {
 		headers: await headers(),
 	})
 
-	// console.log({ session })
 	if (session) {
 		return redirect("/")
 	}

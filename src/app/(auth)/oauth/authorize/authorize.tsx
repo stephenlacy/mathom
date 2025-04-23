@@ -1,26 +1,48 @@
-// 'use client'
-//
-// import { Button } from "@/components/ui/button"
-//
-//
-// export function OauthAuthorize() {
-// return (
-//
-// 		<div className="flex flex-col justify-center p-8 border-1 bg-accent/20 rounded-md gap-4">
-// 			<h2 className="text-2xl">Authorization Request</h2>
-// 			<p className="text-foreground/50">This is your workspace.</p>
-// 			<p className="text-foreground">Launch your first MCP server to get started.</p>
-//
-// 			<div className="bg-accent/20 p-4 rounded-md text-sm font-mono text-foreground/80 border-1 border-solid border-accent">
-// 				<pre>mcx -y my-mcp-server</pre>
-// 			</div>
-//
-// 			<Button variant='default' className="uppercase" onClick={() => approve()}>
-// 				Approve
-// 			</Button>
-// 			<Button variant='destructive' className="uppercase" onClick={() => reject()}>
-// 				Reject
-// 			</Button>
-// 		</div>
-// )
-// }
+"use client"
+
+import { Button } from "@/components/ui/button"
+
+interface AuthorizeProps {
+	clientName: string
+	scopes: string[]
+	approveAction: (formData: FormData) => void
+	denyAction: (formData: FormData) => void
+}
+
+export function OauthAuthorize({ clientName, scopes, approveAction, denyAction }: AuthorizeProps) {
+	return (
+		<main className="flex flex-1 justify-center items-center p-6">
+			<div className="flex flex-col justify-center p-8 border-1 bg-accent/20 rounded-md gap-4 max-w-md w-full">
+				<h2 className="text-2xl font-semibold">Authorization Request</h2>
+				<p className="text-foreground/80">{clientName} is requesting access to your account.</p>
+
+				{scopes.length > 0 && (
+					<div className="mt-4">
+						<p className="font-medium mb-2">This app will be able to:</p>
+						<ul className="list-disc pl-5 space-y-1">
+							{scopes.map((scope) => (
+								<li key={scope} className="text-sm">
+									{scope}
+								</li>
+							))}
+						</ul>
+					</div>
+				)}
+
+				<div className="flex flex-row gap-4 mt-6">
+					<form action={denyAction} method="POST">
+						<Button variant="outline" type="submit" className="w-full flex-1">
+							Deny
+						</Button>
+					</form>
+
+					<form action={approveAction} method="POST">
+						<Button variant="default" type="submit" className="w-full flex-1">
+							Approve
+						</Button>
+					</form>
+				</div>
+			</div>
+		</main>
+	)
+}
