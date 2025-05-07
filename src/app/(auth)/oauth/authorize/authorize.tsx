@@ -13,8 +13,10 @@ export function OauthAuthorize({ clientName, scopes, approveAction, denyAction }
 	return (
 		<main className="flex flex-1 justify-center items-center p-6">
 			<div className="flex flex-col justify-center p-8 border-1 bg-accent/20 rounded-md gap-4 max-w-md w-full">
-				<h2 className="text-2xl font-semibold">Authorization Request</h2>
-				<p className="text-foreground/80">{clientName} is requesting access to your account.</p>
+				<h2 className="text-2xl font-semibold">MCP server Auth Request</h2>
+				<p className="text-foreground/80">
+					<span className="font-bold">{clientName}</span> is requesting access to your account.
+				</p>
 
 				{scopes.length > 0 && (
 					<div className="mt-4">

@@ -38,7 +38,9 @@ export interface CompleteAuthorizationOptions {
 const corsHeaders = () => ({
 	"Access-Control-Allow-Origin": "*",
 	"Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-	"Access-Control-Allow-Headers": "Content-Type, Authorization",
+	"Access-Control-Allow-Headers": "Content-Type, Authorization, mcp-protocol-version",
+	"Content-Type": "application/json",
+	"Access-Control-Allow-Credentials": "true",
 })
 
 /**
@@ -923,6 +925,7 @@ export async function handleTokenRequest(request: NextRequest): Promise<NextResp
 	}
 
 	if (!clientId) {
+		console.error("Client ID is required")
 		return NextResponse.json(
 			{ error: "invalid_client", error_description: "Client ID is required" },
 			{ status: 401 },
@@ -946,11 +949,13 @@ export async function handleTokenRequest(request: NextRequest): Promise<NextResp
 		}
 		return NextResponse.json(result.error, { status: 400 })
 	}
+
 	if (grantType === "refresh_token") {
 		const result = await handleRefreshTokenGrant(body.refresh_token, clientId, clientSecret)
+		// console.log("result", result)
 
 		if (result.success && result.data) {
-			return NextResponse.json(result.data)
+			return NextResponse.json(result.data, { headers: corsHeaders() })
 		}
 		return NextResponse.json(result.error, { status: 400 })
 	}

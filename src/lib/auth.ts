@@ -10,6 +10,9 @@ export const auth = betterAuth({
 	advanced: {
 		generateId: false,
 		cookiePrefix: "runreal",
+		database: {
+			generateId: false,
+		},
 	},
 	session: {
 		cookieCache: {
