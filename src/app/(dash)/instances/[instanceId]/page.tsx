@@ -11,12 +11,11 @@ export default async function InstancePage({
 	const p = await params
 
 	const user = await getUser()
-	console.log({ p })
 	const instance = await getInstance(user.id, p.instanceId)
 
 	return (
 		<div>
-			<Topbar />
+			<Topbar routes={[{ id: instance.id, label: instance.name }]} />
 			<InstanceView user={user} instance={instance} />
 		</div>
 	)

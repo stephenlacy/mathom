@@ -15,11 +15,12 @@ export function Logs({ logs = [], className }: LogsProps) {
 
 	const logsContent = logs.join("\n")
 
-	const handleScroll = useCallback((e) => {
-		if (e.target.scrollTop <= e.target.scrollHeight - e.target.offsetHeight && !more) {
+	const handleScroll = useCallback((e: Event) => {
+		const target = e.currentTarget as HTMLDivElement
+		if (target.scrollTop <= target.scrollHeight - target.offsetHeight && !more) {
 			showMore(true)
 		}
-		if (e.target.scrollTop >= e.target.scrollHeight - e.target.offsetHeight) {
+		if (target.scrollTop >= target.scrollHeight - target.offsetHeight) {
 			showMore(false)
 		}
 	}, [])

@@ -1,5 +1,6 @@
 import { Badge } from "@/components/badge"
 import { Tag } from "@/components/tag"
+import { Topbar } from "@/components/topbar"
 import { listInstances } from "@/core/instances"
 import { getUser } from "@/lib/auth"
 import { timeago } from "@/lib/timeago"
@@ -14,7 +15,9 @@ export default async function InstancesPage() {
 	console.log({ instances })
 
 	return (
-		<div className="flex flex-col p-4">
+		<div>
+			<Topbar />
+			<div className="flex flex-col p-4">
 			<div className="flex flex-col flex-1 items-center justify-center">
 				{instances.map((instance) => {
 					return (
@@ -52,6 +55,7 @@ export default async function InstancesPage() {
 			</div>
 			<div className="flex flex-col flex-1 items-center justify-center mt-8">
 				<EmptyInstances first={instances.length === 0} />
+			</div>
 			</div>
 		</div>
 	)

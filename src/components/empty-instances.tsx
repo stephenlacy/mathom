@@ -50,7 +50,7 @@ export function EmptyInstances({
 						{instance
 							? `mcx -y ${instance.name}`
 							: first
-								? `mcx auth login \nmcx -y my-mcp-server`
+								? `npm i -g mcx\nmcx auth login\nmcx -y my-mcp-server`
 								: `mcx -y my-mcp-server`}
 					</pre>
 				</div>
@@ -89,9 +89,11 @@ export function EmptyInstances({
 					</pre>
 				</div>
 
-				<Button className="uppercase">
-					View Docs <ExternalLinkIcon className="mb-[2px]" />
-				</Button>
+				<div className="flex items-center justify-center">
+					<Button className="uppercase">
+						View Docs <ExternalLinkIcon className="mb-[2px]" />
+					</Button>
+				</div>
 			</div>
 		</div>
 	)

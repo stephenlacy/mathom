@@ -53,7 +53,7 @@ const createOrUpdateServer = async (
 	userId: string,
 	runtime: string,
 ) => {
-	const slug = domainMap[name]
+	const slug = domainMap[name as keyof typeof domainMap]
 
 	const existing = await db
 		.select()
