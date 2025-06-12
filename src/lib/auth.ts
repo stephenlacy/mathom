@@ -7,6 +7,12 @@ import { headers } from "next/headers"
 import { redirect } from "next/navigation"
 
 export const auth = betterAuth({
+	socialProviders: {
+		github: {
+			clientId: process.env.GITHUB_CLIENT_ID!,
+			clientSecret: process.env.GITHUB_CLIENT_SECRET!,
+		},
+	},
 	advanced: {
 		generateId: false,
 		cookiePrefix: "runreal",

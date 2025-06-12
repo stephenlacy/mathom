@@ -14,3 +14,5 @@ export const instances = pgTable("instances", {
 	status: text("status").notNull(),
 	slug: text("slug").notNull(),
 })
+
+export type Instance = typeof instances.$inferSelect

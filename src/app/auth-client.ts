@@ -5,3 +5,5 @@ export const authClient = createAuthClient({
 	baseURL: "http://localhost:5050",
 	plugins: [magicLinkClient(), apiKeyClient()],
 })
+
+export const { useSession, signOut } = authClient

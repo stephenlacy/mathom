@@ -17,7 +17,6 @@ export default async function RootLayout({
 		<main className="flex flex-1 flex-row font-[family-name:var(--font-geist-mono)]">
 			<Sidebar />
 			<div className="flex flex-col w-full">
-				<Topbar />
 				<div className="main">{children}</div>
 			</div>
 		</main>

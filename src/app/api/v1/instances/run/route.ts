@@ -7,6 +7,13 @@ import { NextResponse } from "next/server"
 import { z } from "zod"
 
 const DOMAIN = "dex.systems"
+// const DOCKER_IMAGE = "mathon-node:22.12-alpine-rmcp-proxy" // "mathon-node:22.12-alpine",
+const DOCKER_IMAGE = "mathon-node:22.12-alpine" // "mathon-node:22.12-alpine",
+
+const domainMap = {
+	"@modelcontextprotocol/server-everything": "blue",
+	"@modelcontextprotocol/server-github": "green",
+}
 
 const RequestInput = z.object({
 	name: z.string(),
@@ -28,9 +35,10 @@ export const POST = async (req: Request) => {
 	}
 
 	const body = await req.json()
+	console.log(body)
 	const { name, args } = RequestInput.parse(body)
 
-	const server = await runServer(name, "npx", args, session.user.id, "mathon-node:22.12-alpine")
+	const server = await createOrUpdateServer(name, "npx", args, session.user.id, DOCKER_IMAGE)
 
 	return NextResponse.json({
 		id: server.id,
@@ -38,14 +46,15 @@ export const POST = async (req: Request) => {
 	})
 }
 
-const runServer = async (
+const createOrUpdateServer = async (
 	name: string,
 	cmd: string,
 	args: string[],
 	userId: string,
 	runtime: string,
 ) => {
-	const slug = "blue"
+	const slug = domainMap[name]
+
 	const existing = await db
 		.select()
 		.from(instances)

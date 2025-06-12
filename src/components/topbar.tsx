@@ -1,6 +1,5 @@
 "use client"
 import { usePathname } from "next/navigation"
-import { ThemeToggle } from "./ui/theme-toggle"
 import Link from "next/link"
 
 export function Topbar() {
@@ -11,10 +10,10 @@ export function Topbar() {
 	}
 
 	return (
-		<div className="flex h-[64px] flex-row items-center justify-between w-full px-4 border-b-1 border-b-accent-foreground-muted bg-accent/20">
+		<div className="flex h-[64px] flex-row items-center justify-between w-full px-4 border-b-1 border-b-accent bg-accent/20">
 			<div className="flex flex-row items-center">
 				{pathNames.map((p: string) => {
-					const href = p === "~" ? "/" : p
+					const href = p === "~" ? "/" : `/${p}`
 					return (
 						<Link href={href} key={p} className="text-sm text-foreground uppercase ml-1">
 							/ {p}
@@ -22,7 +21,6 @@ export function Topbar() {
 					)
 				})}
 			</div>
-			<ThemeToggle />
 		</div>
 	)
 }
