@@ -82,9 +82,9 @@ export function EmptyInstances({
   mcpServers: {
     myMCPServer: {
       command: "mcx",
-      args: ["-y", ${instance ? `"${instance.name}"` : `"my-mcp-server"`}],
-    },
-  },
+      args: ["-y", ${instance ? `"${instance.name}"` : `"my-mcp-server"`}]
+    }
+  }
 }`}
 					</pre>
 				</div>
