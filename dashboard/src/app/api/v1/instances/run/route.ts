@@ -7,8 +7,8 @@ import { NextResponse } from "next/server"
 import { z } from "zod"
 
 const DOMAIN = "dex.systems"
-// const DOCKER_IMAGE = "mathon-node:22.12-alpine-rmcp-proxy" // "mathon-node:22.12-alpine",
-const DOCKER_IMAGE = "mathon-node:22.12-alpine" // "mathon-node:22.12-alpine",
+const DOCKER_IMAGE = "mathon-node:22.12-alpine-rmcp-proxy" // "mathon-node:22.12-alpine",
+// const DOCKER_IMAGE = "mathon-node:22.12-alpine" // "mathon-node:22.12-alpine",
 
 const domainMap = {
 	"@modelcontextprotocol/server-everything": "blue",
