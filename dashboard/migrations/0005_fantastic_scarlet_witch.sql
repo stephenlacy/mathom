@@ -1,0 +1,1 @@
+ALTER TABLE "instance_logs" ADD COLUMN "log_type" text DEFAULT 'cmd_log' NOT NULL;

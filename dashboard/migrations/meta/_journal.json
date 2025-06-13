@@ -36,6 +36,13 @@
       "when": 1749674971426,
       "tag": "0004_fantastic_epoch",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1749784515466,
+      "tag": "0005_fantastic_scarlet_witch",
+      "breakpoints": true
     }
   ]
 }

@@ -67,7 +67,7 @@ const links = [
 export function Sidebar() {
 	const pathname = usePathname()
 	return (
-		<SidebarProvider className="flex flex-col h-full w-[256px] border-r-1 border-r-accent bg-accent/20">
+		<SidebarProvider className="flex flex-col h-full w-[256px] border-r-1 border-r-accent bg-accent/20 fixed">
 			<div className="flex p-5 justify-between items-center uppercase">
 				<div>default</div>
 				<div>

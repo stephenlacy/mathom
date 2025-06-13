@@ -38,7 +38,7 @@ export function Logs({ logs = [], className }: LogsProps) {
 	return (
 		<div
 			className={cn(
-				"relative flex flex-col border-1 bg-accent/50 h-[600px] max-h-[900px] w-full rounded-sm inset-shadow-md inset-shadow-accent",
+				"relative flex flex-col border-1 border-accent bg-accent/50 h-[600px] max-h-[900px] w-full rounded-sm inset-shadow-md inset-shadow-accent",
 				className,
 			)}
 		>

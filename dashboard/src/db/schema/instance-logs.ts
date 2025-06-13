@@ -11,6 +11,7 @@ export const instanceLogs = pgTable("instance_logs", {
 	level: text("level").notNull(), // e.g., "info", "error", "debug", "warn"
 	message: text("message").notNull(),
 	timestamp: timestamp("timestamp").notNull(),
+	logType: text("log_type").notNull().default("cmd_log"), // "mcp_stdout", "mcp_stderr", "cmd_log", "mcp_stdin"
 })
 
 export const instanceLogsRelations = relations(instanceLogs, ({ one }) => ({
