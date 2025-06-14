@@ -80,7 +80,7 @@ export function McpCalls({ calls = [], className }: McpCallsProps) {
 			case "request":
 				return "default"
 			case "response":
-				return "secondary"
+				return "default"
 			case "error":
 				return "destructive"
 			default:
@@ -178,19 +178,25 @@ export function McpCalls({ calls = [], className }: McpCallsProps) {
 										) : (
 											<LucideDot className="h-4 w-4 text-foreground/50" />
 										)}
-										<Badge variant={getCallVariant(type) as any} className="gap-1">
+										<Badge
+											variant={getCallVariant(type) as any}
+											className="gap-0 pl-3 pr-3 w-[116px] justify-start text-sm"
+										>
 											{getCallIcon(type)}
-											{type}
+											<span className="ml-2">{type}</span>
 										</Badge>
-										<span className="font-medium text-sm">{header}</span>
-										{call.id !== undefined && (
-											<Badge variant="outline" className="font-mono text-xs">
-												ID: {String(call.id)}
-											</Badge>
-										)}
+										<span className="text-sm">{header}</span>
 									</div>
+									{call.id !== undefined && (
+										<Badge
+											variant="outline"
+											className="font-mono text-sm justify-center ml-auto mr-2"
+										>
+											ID: {String(call.id)}
+										</Badge>
+									)}
 									{call.timestamp && (
-										<div className="text-xs text-foreground/50 font-mono">
+										<div className="text-sm text-foreground/50 font-mono">
 											{new Date(call.timestamp).toLocaleTimeString()}
 										</div>
 									)}
@@ -204,7 +210,7 @@ export function McpCalls({ calls = [], className }: McpCallsProps) {
 												<div className="text-sm text-foreground/70 mb-2 font-medium">
 													Parameters:
 												</div>
-												<pre className="text-xs bg-blue-500/10 border-blue-400/20 p-3 rounded border overflow-x-auto font-mono whitespace-pre-wrap break-words">
+												<pre className="text-sm bg-blue-500/10 border-blue-400/20 p-3 rounded border overflow-x-auto font-mono whitespace-pre-wrap break-words">
 													{formatJsonField(call.params)}
 												</pre>
 											</div>
@@ -213,7 +219,7 @@ export function McpCalls({ calls = [], className }: McpCallsProps) {
 										{call.result && (
 											<div className="mb-3">
 												<div className="text-sm text-foreground/70 mb-2 font-medium">Result:</div>
-												<pre className="text-xs bg-blue-500/10 border-blue-400/20 border p-3 rounded overflow-x-auto font-mono whitespace-pre-wrap break-words">
+												<pre className="text-sm bg-blue-500/10 border-blue-400/20 border p-3 rounded overflow-x-auto font-mono whitespace-pre-wrap break-words">
 													{formatJsonField(call.result)}
 												</pre>
 											</div>
@@ -222,7 +228,7 @@ export function McpCalls({ calls = [], className }: McpCallsProps) {
 										{call.error && (
 											<div className="mb-3">
 												<div className="text-sm text-foreground/70 mb-2 font-medium">Error:</div>
-												<pre className="text-xs bg-red-400/10 border-red-200/20 border p-3 rounded overflow-x-auto font-mono whitespace-pre-wrap break-words">
+												<pre className="text-sm bg-red-400/10 border-red-200/20 border p-3 rounded overflow-x-auto font-mono whitespace-pre-wrap break-words">
 													{formatJsonField(call.error)}
 												</pre>
 											</div>

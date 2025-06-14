@@ -36,7 +36,7 @@ export function useInstanceLogs(instanceId: string, params: LogsQueryParams = {}
 		queryKey: ["instance-logs", instanceId, params],
 		queryFn: () => fetchInstanceLogs(instanceId, params),
 		enabled: !!instanceId,
-		refetchInterval: 5000, // Refetch every 5 seconds for real-time updates
+		refetchInterval: 10000, // Refetch every 10 seconds for real-time updates
 	})
 }
 
