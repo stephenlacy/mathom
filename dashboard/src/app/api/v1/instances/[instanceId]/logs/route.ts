@@ -48,6 +48,15 @@ export const POST = async (
 	const body = await req.json()
 	const { level, message, timestamp, logType } = LogIngestionInput.parse(body)
 
+	// Parse process events from the message to update instance status
+	let processEvent = null
+	try {
+		processEvent = JSON.parse(message)
+	} catch {
+		// Not a JSON message, continue normally
+	}
+
+	// Insert the log entry
 	const logEntry = await db
 		.insert(instanceLogs)
 		.values({
@@ -58,6 +67,32 @@ export const POST = async (
 			logType: logType || "cmd_log",
 		})
 		.returning()
+
+	// Update instance status based on process events or log activity
+	let newStatus = null
+	
+	if (processEvent?.event) {
+		if (processEvent.event === "process_start") {
+			newStatus = "running"
+		} else if (processEvent.event === "process_exit") {
+			newStatus = "exited"
+		} else if (processEvent.event === "signal_received") {
+			// Keep status as running unless it's a shutdown signal
+			if (processEvent.action === "shutting_down") {
+				newStatus = "exited"
+			}
+		}
+	} else if (instance.status === "pending") {
+		// If instance is pending and we're receiving logs, mark it as running
+		newStatus = "running"
+	}
+
+	if (newStatus) {
+		await db
+			.update(instances)
+			.set({ status: newStatus })
+			.where(eq(instances.id, instanceId))
+	}
 
 	return NextResponse.json(logEntry[0])
 }

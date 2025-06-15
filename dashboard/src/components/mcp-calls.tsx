@@ -8,14 +8,16 @@ import {
 	LucideChevronDown,
 	LucideChevronRight,
 	LucideDot,
+	LucideCheck,
+	LucideX,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Badge } from "./ui/badge"
-import { McpCall } from "@/lib/mcp-parser"
+import { McpCall, McpCallGroup } from "@/lib/mcp-parser"
 
 interface McpCallsProps extends React.HTMLAttributes<HTMLDivElement> {
 	className?: string
-	calls: McpCall[]
+	calls: McpCallGroup[]
 }
 
 export function McpCalls({ calls = [], className }: McpCallsProps) {
@@ -55,21 +57,27 @@ export function McpCalls({ calls = [], className }: McpCallsProps) {
 		return () => clearTimeout(timeoutId)
 	}, [calls, expandedItems, checkScrollPosition])
 
-	const getCallType = (call: McpCall) => {
-		if (call.result) return "response"
-		if (call.error) return "error"
-		if (call.method) return "request"
+	const getCallType = (group: McpCallGroup) => {
+		if (group.error) return "error"
+		if (group.response) return "success"
+		if (group.request) {
+			// Check if this is a notification (starts with notifications/ or has no id expectation)
+			if (group.method?.startsWith("notifications/") || typeof group.id === "string") {
+				return "success" // Notifications are complete when sent
+			}
+			return "pending"
+		}
 		return "unknown"
 	}
 
 	const getCallIcon = (type: string) => {
 		switch (type) {
-			case "request":
-				return <LucideArrowRight className="h-4 w-4" />
-			case "response":
-				return <LucideArrowLeft className="h-4 w-4" />
+			case "success":
+				return <LucideCheck className="h-4 w-4" />
 			case "error":
-				return <LucideXCircle className="h-4 w-4" />
+				return <LucideX className="h-4 w-4" />
+			case "pending":
+				return <LucideDot className="h-4 w-4" />
 			default:
 				return null
 		}
@@ -77,12 +85,12 @@ export function McpCalls({ calls = [], className }: McpCallsProps) {
 
 	const getCallVariant = (type: string) => {
 		switch (type) {
-			case "request":
-				return "default"
-			case "response":
+			case "success":
 				return "default"
 			case "error":
 				return "destructive"
+			case "pending":
+				return "secondary"
 			default:
 				return "outline"
 		}
@@ -93,25 +101,47 @@ export function McpCalls({ calls = [], className }: McpCallsProps) {
 		return JSON.stringify(obj, null, 2)
 	}
 
-	const getCallHeader = (call: McpCall) => {
-		if (call.method) {
-			// For requests/notifications, use the method name
-			if (call.method.startsWith("tools/")) {
-				return `tool call: ${call.method.replace("tools/", "")}`
+	const getCallHeader = (group: McpCallGroup) => {
+		if (group.method) {
+			// For tool calls, use the tool name from parameters
+			if (group.method.startsWith("tools/")) {
+				const toolName = group.request?.params?.name || group.method.replace("tools/", "")
+				return (
+					<span className="flex items-center gap-2">
+						<Badge className="bg-accent text-white border-border text-xs px-2 py-1 hover:bg-accent/30">
+							tool call
+						</Badge>
+						{toolName}
+					</span>
+				)
 			}
-			return call.method
+			// For notifications, show a cleaner format
+			if (group.method.startsWith("notifications/")) {
+				return (
+					<span className="flex items-center gap-2">
+						<Badge className="bg-accent text-white border-border text-xs px-2 py-1 hover:bg-accent/30">
+							notification
+						</Badge>
+						{group.method.replace("notifications/", "")}
+					</span>
+				)
+			}
+			return (
+				<span className="flex items-center gap-2">
+					<Badge className="bg-accent text-white border-border text-xs px-2 py-1 hover:bg-accent/30">
+						{group.method}
+					</Badge>
+				</span>
+			)
 		}
-		if (call.result) {
-			return "response"
-		}
-		if (call.error) {
+		if (group.error) {
 			return "error response"
 		}
 		return "unknown"
 	}
 
-	const hasExpandableContent = (call: McpCall) => {
-		return !!(call.params || call.result || call.error)
+	const hasExpandableContent = (group: McpCallGroup) => {
+		return !!(group.request?.params || group.response?.result || group.error?.error)
 	}
 
 	const toggleExpanded = (index: number) => {
@@ -124,6 +154,17 @@ export function McpCalls({ calls = [], className }: McpCallsProps) {
 		setExpandedItems(newExpanded)
 	}
 
+	// Calculate statistics
+	const stats = {
+		total: calls.length,
+		error: calls.filter((call) => getCallType(call) === "error").length,
+		success: calls.filter((call) => getCallType(call) === "success").length,
+		pending: calls.filter((call) => getCallType(call) === "pending").length,
+	}
+
+	const errorRate = stats.total > 0 ? ((stats.error / stats.total) * 100).toFixed(1) : "0.0"
+	const successRate = stats.total > 0 ? ((stats.success / stats.total) * 100).toFixed(1) : "0.0"
+
 	return (
 		<div
 			className={cn(
@@ -132,7 +173,7 @@ export function McpCalls({ calls = [], className }: McpCallsProps) {
 			)}
 		>
 			{more ? (
-				<div className="flex absolute z-10 text-sm text-foreground/50 mt-2 bottom-4 left-0 right-0 items-center justify-center">
+				<div className="flex absolute z-10 text-sm text-foreground/50 mt-2 bottom-12 left-0 right-0 items-center justify-center">
 					<Button
 						variant="secondary"
 						className="h-7 rounded-2xl shadow-2xl border-foreground/20 border text-foreground/80"
@@ -150,11 +191,11 @@ export function McpCalls({ calls = [], className }: McpCallsProps) {
 			<div className="p-4 border-b border-accent">History</div>
 			<div ref={callsContainerRef} className="overflow-scroll h-full w-full p-4 space-y-2">
 				{calls.length > 0 ? (
-					calls.map((call, index) => {
-						const type = getCallType(call)
+					calls.map((group, index) => {
+						const type = getCallType(group)
 						const isExpanded = expandedItems.has(index)
-						const header = getCallHeader(call)
-						const isExpandable = hasExpandableContent(call)
+						const header = getCallHeader(group)
+						const isExpandable = hasExpandableContent(group)
 
 						return (
 							<div
@@ -179,25 +220,38 @@ export function McpCalls({ calls = [], className }: McpCallsProps) {
 											<LucideDot className="h-4 w-4 text-foreground/50" />
 										)}
 										<Badge
-											variant={getCallVariant(type) as any}
-											className="gap-0 pl-3 pr-3 w-[116px] justify-start text-sm"
+											className={`gap-0 px-2 py-1 w-8 h-8 rounded-full justify-center items-center text-sm transition-colors bg-transparent hover:bg-transparent ${
+												type === "error"
+													? "text-red-400"
+													: type === "success"
+														? "text-green-400"
+														: type === "pending"
+															? "text-yellow-400"
+															: " text-gray-400"
+												// type === "error"
+												// 	? "bg-red-500/20 text-red-400 border-red-500/30 hover:bg-red-500/30"
+												// 	: type === "success"
+												// 		? "bg-green-500/20 text-green-400 border-green-500/30 hover:bg-green-500/30"
+												// 		: type === "pending"
+												// 			? "bg-yellow-500/20 text-yellow-400 border-yellow-500/30 hover:bg-yellow-500/30"
+												// 			: "bg-gray-500/20 text-gray-400 border-gray-500/30 hover:bg-gray-500/30"
+											}`}
 										>
 											{getCallIcon(type)}
-											<span className="ml-2">{type}</span>
 										</Badge>
 										<span className="text-sm">{header}</span>
 									</div>
-									{call.id !== undefined && (
+									{group.id !== undefined && typeof group.id !== "string" && (
 										<Badge
 											variant="outline"
-											className="font-mono text-sm justify-center ml-auto mr-2"
+											className="font-mono text-sm bg-acc border-border justify-center ml-auto mr-2"
 										>
-											ID: {String(call.id)}
+											ID: {String(group.id)}
 										</Badge>
 									)}
-									{call.timestamp && (
+									{group.timestamp && (
 										<div className="text-sm text-foreground/50 font-mono">
-											{new Date(call.timestamp).toLocaleTimeString()}
+											{new Date(group.timestamp).toLocaleTimeString()}
 										</div>
 									)}
 								</div>
@@ -205,31 +259,45 @@ export function McpCalls({ calls = [], className }: McpCallsProps) {
 								{/* Expandable Content */}
 								{isExpandable && isExpanded && (
 									<div className="px-3 pb-3 pt-0 border-t border-accent/30">
-										{call.params && (
+										{/* Request */}
+										{group.request && (
 											<div className="mb-3 mt-3">
-												<div className="text-sm text-foreground/70 mb-2 font-medium">
-													Parameters:
+												<div className="text-sm text-foreground/70 mb-2 font-medium flex items-center gap-2">
+													<LucideArrowRight className="h-3 w-3" />
+													Request:
 												</div>
-												<pre className="text-sm bg-blue-500/10 border-blue-400/20 p-3 rounded border overflow-x-auto font-mono whitespace-pre-wrap break-words">
-													{formatJsonField(call.params)}
+												{group.request.params && (
+													<div className="mb-2">
+														<pre className="text-sm bg-blue-500/10 border-blue-400/20 p-3 rounded border overflow-x-auto font-mono whitespace-pre-wrap break-words">
+															{formatJsonField(group.request.params)}
+														</pre>
+													</div>
+												)}
+											</div>
+										)}
+
+										{/* Response */}
+										{group.response && (
+											<div className="mb-3">
+												<div className="text-sm text-foreground/70 mb-2 font-medium flex items-center gap-2">
+													<LucideArrowLeft className="h-3 w-3" />
+													Response:
+												</div>
+												<pre className="text-sm bg-green-500/10 border-green-400/20 border p-3 rounded overflow-x-auto font-mono whitespace-pre-wrap break-words">
+													{formatJsonField(group.response.result)}
 												</pre>
 											</div>
 										)}
 
-										{call.result && (
+										{/* Error */}
+										{group.error && (
 											<div className="mb-3">
-												<div className="text-sm text-foreground/70 mb-2 font-medium">Result:</div>
-												<pre className="text-sm bg-blue-500/10 border-blue-400/20 border p-3 rounded overflow-x-auto font-mono whitespace-pre-wrap break-words">
-													{formatJsonField(call.result)}
-												</pre>
-											</div>
-										)}
-
-										{call.error && (
-											<div className="mb-3">
-												<div className="text-sm text-foreground/70 mb-2 font-medium">Error:</div>
+												<div className="text-sm text-foreground/70 mb-2 font-medium flex items-center gap-2">
+													<LucideXCircle className="h-3 w-3" />
+													Error:
+												</div>
 												<pre className="text-sm bg-red-400/10 border-red-200/20 border p-3 rounded overflow-x-auto font-mono whitespace-pre-wrap break-words">
-													{formatJsonField(call.error)}
+													{formatJsonField(group.error.error)}
 												</pre>
 											</div>
 										)}
@@ -243,6 +311,27 @@ export function McpCalls({ calls = [], className }: McpCallsProps) {
 						No MCP calls available
 					</div>
 				)}
+			</div>
+
+			{/* Footer */}
+			<div className="p-4 border-t border-accent bg-accent/30">
+				<div className="flex items-center justify-between text-sm">
+					<div className="flex items-center gap-4">
+						<div className="flex items-center gap-2">
+							<div className="w-2 h-2 rounded-full bg-red-400"></div>
+							<span className="text-foreground/70">
+								Error Rate: {stats.error} ({errorRate}%)
+							</span>
+						</div>
+						<div className="flex items-center gap-2">
+							<div className="w-2 h-2 rounded-full bg-green-400"></div>
+							<span className="text-foreground/70">
+								Success Rate: {stats.success} ({successRate}%)
+							</span>
+						</div>
+					</div>
+					<div className="text-foreground/50">Total: {stats.total} calls</div>
+				</div>
 			</div>
 		</div>
 	)

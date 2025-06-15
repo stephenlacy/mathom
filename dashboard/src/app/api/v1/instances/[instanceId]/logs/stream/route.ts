@@ -43,8 +43,10 @@ export const POST = async (
 	const { logs } = LogStreamInput.parse(body)
 
 	// Process logs in batches to avoid database limits
+	// Also check for process events to update instance status
 	const batchSize = 100
 	const results = []
+	let latestStatus = null
 
 	for (let i = 0; i < logs.length; i += batchSize) {
 		const batch = logs.slice(i, i + batchSize)
@@ -57,9 +59,40 @@ export const POST = async (
 			logType: log.logType || "cmd_log",
 		}))
 
-		const batchResults = await db.insert(instanceLogs).values(logEntries).returning()
+		// Check for process events in this batch
+		for (const log of batch) {
+			try {
+				const processEvent = JSON.parse(log.message)
+				if (processEvent?.event) {
+					if (processEvent.event === "process_start") {
+						latestStatus = "running"
+					} else if (processEvent.event === "process_exit") {
+						latestStatus = "exited"
+					} else if (processEvent.event === "signal_received" && processEvent.action === "shutting_down") {
+						latestStatus = "exited"
+					}
+				}
+			} catch {
+				// Not a JSON message, continue
+			}
+		}
 
+		const batchResults = await db.insert(instanceLogs).values(logEntries).returning()
 		results.push(...batchResults)
+	}
+
+	// Update instance status if we found any process events, or if instance is pending and receiving logs
+	if (latestStatus) {
+		await db
+			.update(instances)
+			.set({ status: latestStatus })
+			.where(eq(instances.id, instanceId))
+	} else if (instance.status === "pending" && logs.length > 0) {
+		// If instance is pending and we're receiving logs, mark it as running
+		await db
+			.update(instances)
+			.set({ status: "running" })
+			.where(eq(instances.id, instanceId))
 	}
 
 	return NextResponse.json({
