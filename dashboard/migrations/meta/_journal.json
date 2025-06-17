@@ -43,6 +43,13 @@
       "when": 1749784515466,
       "tag": "0005_fantastic_scarlet_witch",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1750008492438,
+      "tag": "0006_oval_mister_sinister",
+      "breakpoints": true
     }
   ]
 }

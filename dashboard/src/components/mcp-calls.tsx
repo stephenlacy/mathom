@@ -108,7 +108,7 @@ export function McpCalls({ calls = [], className }: McpCallsProps) {
 				const toolName = group.request?.params?.name || group.method.replace("tools/", "")
 				return (
 					<span className="flex items-center gap-2">
-						<Badge className="bg-accent text-white border-border text-xs px-2 py-1 hover:bg-accent/30">
+						<Badge className="bg-accent text-foreground border-border text-xs px-2 py-1 hover:bg-accent/30">
 							tool call
 						</Badge>
 						{toolName}
@@ -119,7 +119,7 @@ export function McpCalls({ calls = [], className }: McpCallsProps) {
 			if (group.method.startsWith("notifications/")) {
 				return (
 					<span className="flex items-center gap-2">
-						<Badge className="bg-accent text-white border-border text-xs px-2 py-1 hover:bg-accent/30">
+						<Badge className="bg-accent text-foreground border-border text-xs px-2 py-1 hover:bg-accent/30">
 							notification
 						</Badge>
 						{group.method.replace("notifications/", "")}
@@ -128,7 +128,7 @@ export function McpCalls({ calls = [], className }: McpCallsProps) {
 			}
 			return (
 				<span className="flex items-center gap-2">
-					<Badge className="bg-accent text-white border-border text-xs px-2 py-1 hover:bg-accent/30">
+					<Badge className="bg-accent text-foreground border-border text-xs px-2 py-1 hover:bg-accent/30">
 						{group.method}
 					</Badge>
 				</span>

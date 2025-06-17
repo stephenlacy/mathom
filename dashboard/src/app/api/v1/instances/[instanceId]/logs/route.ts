@@ -69,32 +69,35 @@ export const POST = async (
 		.returning()
 
 	// Update instance status based on process events or log activity
-	let newStatus = null
-	
-	if (processEvent?.event) {
-		if (processEvent.event === "process_start") {
-			newStatus = "running"
-		} else if (processEvent.event === "process_exit") {
-			newStatus = "exited"
-		} else if (processEvent.event === "signal_received") {
-			// Keep status as running unless it's a shutdown signal
-			if (processEvent.action === "shutting_down") {
-				newStatus = "exited"
-			}
-		}
-	} else if (instance.status === "pending") {
-		// If instance is pending and we're receiving logs, mark it as running
-		newStatus = "running"
-	}
+	const statusUpdate = processEvent?.event ? getStatusFromProcessEvent(processEvent) : null
 
-	if (newStatus) {
-		await db
-			.update(instances)
-			.set({ status: newStatus })
-			.where(eq(instances.id, instanceId))
+	if (statusUpdate) {
+		await db.update(instances).set(statusUpdate).where(eq(instances.id, instanceId))
+	} else if (instance.status !== "running") {
+		// If instance is not running we have logs mark it as running
+		await db.update(instances).set({ status: "running" }).where(eq(instances.id, instanceId))
 	}
 
 	return NextResponse.json(logEntry[0])
+}
+
+function getStatusFromProcessEvent(
+	processEvent: any,
+): { status: string; exitCode?: string } | null {
+	switch (processEvent.event) {
+		case "process_start":
+			return { status: "running" }
+
+		case "process_exit":
+			const exitCode = processEvent.signal_number?.toString() || processEvent.exit_code?.toString()
+			return exitCode ? { status: "exited", exitCode } : { status: "exited" }
+
+		case "signal_received":
+			return processEvent.action === "shutting_down" ? { status: "exited" } : null
+
+		default:
+			return null
+	}
 }
 
 export const GET = async (

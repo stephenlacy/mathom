@@ -47,6 +47,7 @@ export const POST = async (
 	const batchSize = 100
 	const results = []
 	let latestStatus = null
+	let latestExitCode = null
 
 	for (let i = 0; i < logs.length; i += batchSize) {
 		const batch = logs.slice(i, i + batchSize)
@@ -68,6 +69,8 @@ export const POST = async (
 						latestStatus = "running"
 					} else if (processEvent.event === "process_exit") {
 						latestStatus = "exited"
+						// Extract exit code from signal_number or exit_code field
+						latestExitCode = processEvent.signal_number?.toString() || processEvent.exit_code?.toString() || null
 					} else if (processEvent.event === "signal_received" && processEvent.action === "shutting_down") {
 						latestStatus = "exited"
 					}
@@ -83,9 +86,14 @@ export const POST = async (
 
 	// Update instance status if we found any process events, or if instance is pending and receiving logs
 	if (latestStatus) {
+		const updateData: any = { status: latestStatus }
+		if (latestExitCode !== null) {
+			updateData.exitCode = latestExitCode
+		}
+		
 		await db
 			.update(instances)
-			.set({ status: latestStatus })
+			.set(updateData)
 			.where(eq(instances.id, instanceId))
 	} else if (instance.status === "pending" && logs.length > 0) {
 		// If instance is pending and we're receiving logs, mark it as running

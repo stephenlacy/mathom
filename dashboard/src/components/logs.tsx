@@ -61,7 +61,7 @@ export function Logs({ logs = [], className }: LogsProps) {
 			<div className="p-4 border-b border-accent">Logs</div>
 			<div ref={logsContainerRef} className="overflow-scroll min-h-full break-words p-4 pt-1">
 				{logsContent ? (
-					<pre ref={logsRef} className="whitespace-pre-wrap text-foreground/80">
+					<pre ref={logsRef} className="whitespace-pre-wrap text-foreground/80 font-mono mt-2">
 						{logsContent}
 					</pre>
 				) : (

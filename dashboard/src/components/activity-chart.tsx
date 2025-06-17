@@ -1,10 +1,21 @@
 import { McpCallGroup } from "@/lib/mcp-parser"
+import { useState } from "react"
 
 interface ActivityChartProps {
 	mcpCalls: McpCallGroup[]
 }
 
+interface TooltipData {
+	x: number
+	y: number
+	successValue: number
+	errorValue: number
+	time: string
+}
+
 export function ActivityChart({ mcpCalls }: ActivityChartProps) {
+	const [tooltip, setTooltip] = useState<TooltipData | null>(null)
+
 	// Prepare activity data for the line graph
 	const prepareActivityData = () => {
 		if (!mcpCalls || mcpCalls.length === 0) return { successData: [], errorData: [], bucketSize: 'minute' }
@@ -77,7 +88,12 @@ export function ActivityChart({ mcpCalls }: ActivityChartProps) {
 			</div>
 			{successData.length > 0 ? (
 				<div className="flex-1 relative">
-					<svg className="w-full h-32" viewBox="0 0 400 100" preserveAspectRatio="none">
+					<svg 
+						className="w-full h-32" 
+						viewBox="0 0 400 100" 
+						preserveAspectRatio="none"
+						onMouseLeave={() => setTooltip(null)}
+					>
 						{/* Grid lines */}
 						<defs>
 							<pattern id="grid" width="40" height="20" patternUnits="userSpaceOnUse">
@@ -112,6 +128,42 @@ export function ActivityChart({ mcpCalls }: ActivityChartProps) {
 							}).join(' ')}
 						/>
 						
+						{/* Invisible hover areas */}
+						{successData.map((point, index) => {
+							const x = (index / (successData.length - 1)) * 380 + 10
+							return (
+								<rect
+									key={`hover-${index}`}
+									x={x - 15}
+									y="0"
+									width="30"
+									height="100"
+									fill="transparent"
+									style={{ cursor: 'pointer' }}
+									onMouseEnter={(e) => {
+										setTooltip({
+											x: e.clientX,
+											y: e.clientY,
+											successValue: successData[index].value,
+											errorValue: errorData[index].value,
+											time: successData[index].time
+										})
+									}}
+									onMouseMove={(e) => {
+										if (tooltip) {
+											setTooltip({
+												x: e.clientX,
+												y: e.clientY,
+												successValue: successData[index].value,
+												errorValue: errorData[index].value,
+												time: successData[index].time
+											})
+										}
+									}}
+								/>
+							)
+						})}
+
 						{/* Success dots */}
 						{successData.map((point, index) => {
 							const x = (index / (successData.length - 1)) * 380 + 10
@@ -124,6 +176,7 @@ export function ActivityChart({ mcpCalls }: ActivityChartProps) {
 									cy={y}
 									r="3"
 									fill="#4ade80"
+									style={{ pointerEvents: 'none' }}
 								/>
 							)
 						})}
@@ -140,10 +193,37 @@ export function ActivityChart({ mcpCalls }: ActivityChartProps) {
 									cy={y}
 									r="3"
 									fill="#f87171"
+									style={{ pointerEvents: 'none' }}
 								/>
 							)
 						})}
 					</svg>
+					
+					{/* Tooltip */}
+					{tooltip && (
+						<div 
+							className="fixed z-50 bg-background border border-accent rounded-md p-2 text-xs shadow-lg"
+							style={{
+								left: tooltip.x,
+								top: tooltip.y - 80,
+								transform: 'translateX(-50%)'
+							}}
+						>
+							<div className="font-medium text-foreground/90 mb-1">{tooltip.time}</div>
+							<div className="flex items-center gap-2">
+								<div className="flex items-center gap-1">
+									<div className="w-2 h-2 rounded-full bg-green-400"></div>
+									<span className="text-foreground/70">Success: {tooltip.successValue}</span>
+								</div>
+							</div>
+							<div className="flex items-center gap-2">
+								<div className="flex items-center gap-1">
+									<div className="w-2 h-2 rounded-full bg-red-400"></div>
+									<span className="text-foreground/70">Error: {tooltip.errorValue}</span>
+								</div>
+							</div>
+						</div>
+					)}
 					
 					{/* Legend */}
 					<div className="flex items-center gap-4 mt-2 text-xs">

@@ -12,6 +12,7 @@ export const instances = pgTable("instances", {
 	cmd: text("cmd").notNull(),
 	args: jsonb("args").notNull(),
 	status: text("status").notNull(),
+	exitCode: text("exit_code"),
 	slug: text("slug").notNull(),
 })
 

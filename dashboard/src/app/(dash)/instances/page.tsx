@@ -1,6 +1,7 @@
 import { Badge } from "@/components/badge"
-import { Tag } from "@/components/tag"
 import { Topbar } from "@/components/topbar"
+import { InstanceHeatmap } from "@/components/instance-heatmap"
+import { InstanceStatus } from "@/components/instance-status"
 import { listInstances } from "@/core/instances"
 import { getUser } from "@/lib/auth"
 import { timeago } from "@/lib/timeago"
@@ -33,13 +34,20 @@ export default async function InstancesPage() {
 								</div>
 								<div className="flex flex-col w-[400px]">
 									<div className="text-md w-full truncate overflow-ellipsis">{instance.name}</div>
-									<div className="text-sm text-foreground/50 hover:text-foreground/80">
+									<div className="text-sm text-foreground/50 hover:text-foreground/80 mb-2">
 										{instance.id}
 									</div>
 								</div>
+
 								<div className="flex flex-col">
-									<Tag>image: {instance.runtime}</Tag>
-									<p className="text-foreground">Status: {instance.status}</p>
+									<InstanceStatus
+										status={instance.status}
+										exitCode={instance.exitCode}
+										className="w-fit"
+									/>
+								</div>
+								<div className="w-32 p-1">
+									<InstanceHeatmap instanceId={instance.id} />
 								</div>
 								<div className="flex flex-col ml-auto items-center justify-center gap-1">
 									<div

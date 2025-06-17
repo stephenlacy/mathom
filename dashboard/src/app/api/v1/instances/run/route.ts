@@ -7,7 +7,7 @@ import { NextResponse } from "next/server"
 import { z } from "zod"
 
 const DOMAIN = "dex.systems"
-const DOCKER_IMAGE = "mathon-node:22.12-alpine-rmcp-proxy" // "mathon-node:22.12-alpine",
+const DOCKER_IMAGE = "mathom-node:22.12-alpine-mathom-proxy" // "mathon-node:22.12-alpine",
 // const DOCKER_IMAGE = "mathon-node:22.12-alpine" // "mathon-node:22.12-alpine",
 
 const domainMap = {
@@ -35,7 +35,6 @@ export const POST = async (req: Request) => {
 	}
 
 	const body = await req.json()
-	console.log(body)
 	const { name, args } = RequestInput.parse(body)
 
 	const server = await createOrUpdateServer(name, "npx", args, session.user.id, DOCKER_IMAGE)
