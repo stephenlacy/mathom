@@ -1,7 +1,7 @@
 import { db } from "@/db/drizzle"
 import { betterAuth } from "better-auth"
 import { drizzleAdapter } from "better-auth/adapters/drizzle"
-import { apiKey, bearer, magicLink } from "better-auth/plugins"
+import { apiKey, bearer, jwt, magicLink } from "better-auth/plugins"
 import * as schema from "@/db/schema"
 import { headers } from "next/headers"
 import { redirect } from "next/navigation"
@@ -27,6 +27,7 @@ export const auth = betterAuth({
 		},
 	},
 	plugins: [
+		jwt(),
 		apiKey(),
 		bearer(),
 		magicLink({
