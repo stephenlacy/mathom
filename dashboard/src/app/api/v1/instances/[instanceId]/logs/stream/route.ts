@@ -70,8 +70,12 @@ export const POST = async (
 					} else if (processEvent.event === "process_exit") {
 						latestStatus = "exited"
 						// Extract exit code from signal_number or exit_code field
-						latestExitCode = processEvent.signal_number?.toString() || processEvent.exit_code?.toString() || null
-					} else if (processEvent.event === "signal_received" && processEvent.action === "shutting_down") {
+						latestExitCode =
+							processEvent.signal_number?.toString() || processEvent.exit_code?.toString() || null
+					} else if (
+						processEvent.event === "signal_received" &&
+						processEvent.action === "shutting_down"
+					) {
 						latestStatus = "exited"
 					}
 				}
@@ -90,17 +94,11 @@ export const POST = async (
 		if (latestExitCode !== null) {
 			updateData.exitCode = latestExitCode
 		}
-		
-		await db
-			.update(instances)
-			.set(updateData)
-			.where(eq(instances.id, instanceId))
+
+		await db.update(instances).set(updateData).where(eq(instances.id, instanceId))
 	} else if (instance.status === "pending" && logs.length > 0) {
 		// If instance is pending and we're receiving logs, mark it as running
-		await db
-			.update(instances)
-			.set({ status: "running" })
-			.where(eq(instances.id, instanceId))
+		await db.update(instances).set({ status: "running" }).where(eq(instances.id, instanceId))
 	}
 
 	return NextResponse.json({

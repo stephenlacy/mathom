@@ -27,8 +27,14 @@ export const auth = betterAuth({
 		},
 	},
 	plugins: [
-		jwt(),
-		apiKey(),
+		// jwt(),
+		apiKey({
+			permissions: {
+				defaultPermissions: {
+					logs: ["read"],
+				},
+			},
+		}),
 		bearer(),
 		magicLink({
 			sendMagicLink: async ({ email, token, url }) => {

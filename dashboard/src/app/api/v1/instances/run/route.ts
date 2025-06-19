@@ -64,6 +64,17 @@ const createOrUpdateServer = async (
 		return existing[0]
 	}
 
+	// Create API key for this instance with log creation permissions
+	const apiKeyResult = await auth.api.createApiKey({
+		body: {
+			name: "system",
+			userId: userId,
+			permissions: {
+				logs: ["create"],
+			},
+		},
+	})
+
 	const res = await db
 		.insert(instances)
 		.values({
@@ -74,6 +85,7 @@ const createOrUpdateServer = async (
 			args,
 			slug,
 			status: "pending",
+			apiKey: apiKeyResult.key,
 		})
 		.returning()
 

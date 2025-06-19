@@ -23,12 +23,80 @@ const LogsQueryInput = z.object({
 	offset: z.coerce.number().min(0).optional().default(0),
 })
 
+function parseProcessEvent(message: string) {
+	try {
+		return JSON.parse(message)
+	} catch {
+		return null
+	}
+}
+
 export const POST = async (
 	req: Request,
 	{ params }: { params: Promise<{ instanceId: string }> },
 ) => {
+	const headersList = await headers()
+
+	// Check for API key authentication first
+	const apiKeyHeader = headersList.get("authorization")?.replace("Bearer ", "")
+	if (apiKeyHeader) {
+		const apiKeyResult = await auth.api.verifyApiKey({
+			body: {
+				key: apiKeyHeader,
+				permissions: {
+					logs: ["create"],
+				},
+			},
+		})
+
+		if (!apiKeyResult.valid || !apiKeyResult.key) {
+			return NextResponse.json(
+				{ error: "Invalid API key or insufficient permissions" },
+				{ status: 401 },
+			)
+		}
+
+		const userId = apiKeyResult.key.userId
+		const { instanceId } = await params
+
+		const instance = await db.query.instances.findFirst({
+			where: and(eq(instances.id, instanceId), eq(instances.userId, userId)),
+		})
+
+		if (!instance) {
+			return NextResponse.json({ error: "Instance not found" }, { status: 404 })
+		}
+
+		const body = await req.json()
+		const { level, message, timestamp, logType } = LogIngestionInput.parse(body)
+
+		const logEntry = await db
+			.insert(instanceLogs)
+			.values({
+				instanceId,
+				level,
+				message,
+				timestamp: timestamp ? new Date(timestamp) : new Date(),
+				logType: logType || "cmd_log",
+			})
+			.returning()
+
+		// Update instance status based on process events or log activity
+		const processEvent = parseProcessEvent(message)
+		const statusUpdate = processEvent?.event ? getStatusFromProcessEvent(processEvent) : null
+
+		if (statusUpdate) {
+			await db.update(instances).set(statusUpdate).where(eq(instances.id, instanceId))
+		} else if (instance.status !== "running") {
+			await db.update(instances).set({ status: "running" }).where(eq(instances.id, instanceId))
+		}
+
+		return NextResponse.json(logEntry[0])
+	}
+
+	// Fall back to session-based authentication
 	const session = await auth.api.getSession({
-		headers: await headers(),
+		headers: headersList,
 	})
 	if (!session?.user) {
 		return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
@@ -49,12 +117,7 @@ export const POST = async (
 	const { level, message, timestamp, logType } = LogIngestionInput.parse(body)
 
 	// Parse process events from the message to update instance status
-	let processEvent = null
-	try {
-		processEvent = JSON.parse(message)
-	} catch {
-		// Not a JSON message, continue normally
-	}
+	const processEvent = parseProcessEvent(message)
 
 	// Insert the log entry
 	const logEntry = await db

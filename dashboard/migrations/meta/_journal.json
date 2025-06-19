@@ -57,6 +57,13 @@
       "when": 1750140984997,
       "tag": "0007_tense_warpath",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1750213040569,
+      "tag": "0008_natural_magneto",
+      "breakpoints": true
     }
   ]
 }

@@ -197,4 +197,3 @@ export function McpTools({ mcpCalls = [], className }: McpToolsProps) {
 		</div>
 	)
 }
-

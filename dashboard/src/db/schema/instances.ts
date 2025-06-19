@@ -14,6 +14,7 @@ export const instances = pgTable("instances", {
 	status: text("status").notNull(),
 	exitCode: text("exit_code"),
 	slug: text("slug").notNull(),
+	apiKey: text("api_key"),
 })
 
 export type Instance = typeof instances.$inferSelect

@@ -85,8 +85,8 @@ export function InstanceView({
 				<div className="flex w-full flex-1 flex-col border-1 border-accent bg-accent/50 rounded-sm p-4">
 					<div className="flex items-center justify-between border-b border-b-accent mb-2 pb-2">
 						<span>Status</span>
-						<InstanceStatus 
-							status={instance.status} 
+						<InstanceStatus
+							status={instance.status}
 							exitCode={instance.exitCode}
 							className="text-sm"
 						/>

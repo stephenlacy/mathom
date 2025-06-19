@@ -58,7 +58,7 @@ export function parseMcpCalls(logs: InstanceLog[]): McpCallGroup[] {
 			}
 
 			const group = groupedCalls.get(id)!
-			
+
 			if (call.method) {
 				// This is a request
 				group.request = call
