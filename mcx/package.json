@@ -1,0 +1,52 @@
+{
+  "name": "mcx",
+  "author": "",
+  "description": "Stricli command line application",
+  "license": "MIT",
+  "type": "module",
+  "version": "0.0.0",
+  "files": [
+    "dist"
+  ],
+  "bin": {
+    "mcx": "dist/cli.js",
+    "__mcx_bash_complete": "dist/bash-complete.js"
+  },
+  "engines": {
+    "node": ">=23"
+  },
+  "scripts": {
+    "prebuild": "tsc -p src/tsconfig.json",
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "typecheck": "tsc -p src/tsconfig.json --noEmit",
+    "prepublishOnly": "pnpm run build"
+  },
+  "tsup": {
+    "entry": [
+      "src/bin/cli.ts",
+      "src/bin/bash-complete.ts"
+    ],
+    "format": [
+      "esm"
+    ],
+    "tsconfig": "src/tsconfig.json",
+    "clean": true,
+    "splitting": true,
+    "minify": true
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.9.0",
+    "@stricli/auto-complete": "^1.1.2",
+    "@stricli/core": "^1.1.2",
+    "mcp-remote": "0.1.14",
+    "nanoid": "^5.1.5",
+    "picocolors": "^1.1.1"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^1.9.4",
+    "@types/node": "22.14",
+    "tsup": "^6.7.0",
+    "typescript": "5.6"
+  }
+}
