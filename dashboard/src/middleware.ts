@@ -5,6 +5,11 @@ import { headers } from "next/headers"
 // This middleware is used to protect API routes
 // Not the client-side pages
 export async function middleware(request: NextRequest) {
+	// Allow anonymous access to CLI verification endpoints
+	if (request.nextUrl.pathname.startsWith("/api/v1/auth/cli-verification")) {
+		return NextResponse.next()
+	}
+
 	try {
 		const session = await auth.api.getSession({
 			headers: await headers(),

@@ -5,6 +5,7 @@ export * from "./auth"
 export * from "./instances"
 export * from "./instance-logs"
 export * from "./oauth"
+export * from "./cli-verifications"
 
 export type Instance = typeof instances.$inferSelect
 

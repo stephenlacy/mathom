@@ -64,6 +64,13 @@
       "when": 1750213040569,
       "tag": "0008_natural_magneto",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1750300936584,
+      "tag": "0009_supreme_energizer",
+      "breakpoints": true
     }
   ]
 }

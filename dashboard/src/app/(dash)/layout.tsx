@@ -16,9 +16,7 @@ export default async function RootLayout({
 	return (
 		<main className="flex flex-1 flex-row font-[family-name:var(--font-geist-mono)]">
 			<Sidebar />
-			<div className="flex flex-col w-full ml-[256px]">
-				<div className="main">{children}</div>
-			</div>
+			<div className="flex flex-col w-full ml-[256px]">{children}</div>
 		</main>
 	)
 }
