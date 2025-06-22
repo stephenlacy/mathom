@@ -1,7 +1,5 @@
-import { useCallback, useEffect, useRef, useState } from "react"
-import { Button } from "./ui/button"
+import { useState } from "react"
 import {
-	LucideArrowDown,
 	LucideArrowRight,
 	LucideArrowLeft,
 	LucideXCircle,
@@ -11,8 +9,8 @@ import {
 	LucideCheck,
 	LucideX,
 } from "lucide-react"
-import { cn } from "@/lib/utils"
 import { Badge } from "./ui/badge"
+import { MoreScrollContainer } from "./ui/more-scroll-container"
 import { McpCall, McpCallGroup } from "@/lib/mcp-parser"
 
 interface McpCallsProps extends React.HTMLAttributes<HTMLDivElement> {
@@ -21,41 +19,7 @@ interface McpCallsProps extends React.HTMLAttributes<HTMLDivElement> {
 }
 
 export function McpCalls({ calls = [], className }: McpCallsProps) {
-	const callsContainerRef = useRef<HTMLDivElement>(null)
-	const [more, showMore] = useState(false)
 	const [expandedItems, setExpandedItems] = useState<Set<number>>(new Set())
-
-	const checkScrollPosition = useCallback(() => {
-		const container = callsContainerRef.current
-		if (!container) return
-
-		const { scrollTop, scrollHeight, clientHeight } = container
-		const isScrollable = scrollHeight > clientHeight
-		const isAtBottom = Math.abs(scrollHeight - clientHeight - scrollTop) < 5 // 5px tolerance
-
-		showMore(isScrollable && !isAtBottom)
-	}, [])
-
-	const handleScroll = useCallback(
-		(e: Event) => {
-			checkScrollPosition()
-		},
-		[checkScrollPosition],
-	)
-
-	useEffect(() => {
-		const container = callsContainerRef.current
-		if (container) {
-			container.addEventListener("scroll", handleScroll)
-			return () => container.removeEventListener("scroll", handleScroll)
-		}
-	}, [handleScroll])
-
-	useEffect(() => {
-		// Check scroll position when content changes
-		const timeoutId = setTimeout(checkScrollPosition, 100) // Small delay to ensure DOM is updated
-		return () => clearTimeout(timeoutId)
-	}, [calls, expandedItems, checkScrollPosition])
 
 	const getCallType = (group: McpCallGroup) => {
 		if (group.error) return "error"
@@ -166,155 +130,11 @@ export function McpCalls({ calls = [], className }: McpCallsProps) {
 	const successRate = stats.total > 0 ? ((stats.success / stats.total) * 100).toFixed(1) : "0.0"
 
 	return (
-		<div
-			className={cn(
-				"relative flex flex-col border-1 border-accent bg-accent/50 h-[600px] max-h-[900px] w-full rounded-sm inset-shadow-md inset-shadow-accent",
-				className,
-			)}
-		>
-			{more ? (
-				<div className="flex absolute z-10 text-sm text-foreground/50 mt-2 bottom-12 left-0 right-0 items-center justify-center">
-					<Button
-						variant="secondary"
-						className="h-7 rounded-2xl shadow-2xl border-foreground/20 border text-foreground/80"
-						onClick={() => {
-							callsContainerRef.current?.scrollTo({
-								top: callsContainerRef.current.scrollHeight,
-								behavior: "smooth",
-							})
-						}}
-					>
-						More <LucideArrowDown className="ml-1 h-4 w-4" />
-					</Button>
-				</div>
-			) : null}
-			<div className="p-4 border-b border-accent">History</div>
-			<div ref={callsContainerRef} className="overflow-scroll h-full w-full p-4 space-y-2">
-				{calls.length > 0 ? (
-					calls.map((group, index) => {
-						const type = getCallType(group)
-						const isExpanded = expandedItems.has(index)
-						const header = getCallHeader(group)
-						const isExpandable = hasExpandableContent(group)
-
-						return (
-							<div
-								key={index}
-								className="border border-accent/50 rounded-md bg-background/50 transition-colors hover:bg-background/80"
-							>
-								{/* Clickable Header */}
-								<div
-									className={`flex items-center justify-between p-3 transition-colors ${
-										isExpandable ? "cursor-pointer" : "cursor-default"
-									}`}
-									onClick={isExpandable ? () => toggleExpanded(index) : undefined}
-								>
-									<div className="flex items-center gap-2">
-										{isExpandable ? (
-											isExpanded ? (
-												<LucideChevronDown className="h-4 w-4 text-foreground/50" />
-											) : (
-												<LucideChevronRight className="h-4 w-4 text-foreground/50" />
-											)
-										) : (
-											<LucideDot className="h-4 w-4 text-foreground/50" />
-										)}
-										<Badge
-											className={`gap-0 px-2 py-1 w-8 h-8 rounded-full justify-center items-center text-sm transition-colors bg-transparent hover:bg-transparent ${
-												type === "error"
-													? "text-red-400"
-													: type === "success"
-														? "text-green-400"
-														: type === "pending"
-															? "text-yellow-400"
-															: " text-gray-400"
-												// type === "error"
-												// 	? "bg-red-500/20 text-red-400 border-red-500/30 hover:bg-red-500/30"
-												// 	: type === "success"
-												// 		? "bg-green-500/20 text-green-400 border-green-500/30 hover:bg-green-500/30"
-												// 		: type === "pending"
-												// 			? "bg-yellow-500/20 text-yellow-400 border-yellow-500/30 hover:bg-yellow-500/30"
-												// 			: "bg-gray-500/20 text-gray-400 border-gray-500/30 hover:bg-gray-500/30"
-											}`}
-										>
-											{getCallIcon(type)}
-										</Badge>
-										<span className="text-sm">{header}</span>
-									</div>
-									{group.id !== undefined && typeof group.id !== "string" && (
-										<Badge
-											variant="outline"
-											className="font-mono text-sm bg-acc border-border justify-center ml-auto mr-2"
-										>
-											ID: {String(group.id)}
-										</Badge>
-									)}
-									{group.timestamp && (
-										<div className="text-sm text-foreground/50 font-mono">
-											{new Date(group.timestamp).toLocaleTimeString()}
-										</div>
-									)}
-								</div>
-
-								{/* Expandable Content */}
-								{isExpandable && isExpanded && (
-									<div className="px-3 pb-3 pt-0 border-t border-accent/30">
-										{/* Request */}
-										{group.request && (
-											<div className="mb-3 mt-3">
-												<div className="text-sm text-foreground/70 mb-2 font-medium flex items-center gap-2">
-													<LucideArrowRight className="h-3 w-3" />
-													Request:
-												</div>
-												{group.request.params && (
-													<div className="mb-2">
-														<pre className="text-sm bg-blue-500/10 border-blue-400/20 p-3 rounded border overflow-x-auto font-mono whitespace-pre-wrap break-words">
-															{formatJsonField(group.request.params)}
-														</pre>
-													</div>
-												)}
-											</div>
-										)}
-
-										{/* Response */}
-										{group.response && (
-											<div className="mb-3">
-												<div className="text-sm text-foreground/70 mb-2 font-medium flex items-center gap-2">
-													<LucideArrowLeft className="h-3 w-3" />
-													Response:
-												</div>
-												<pre className="text-sm bg-green-500/10 border-green-400/20 border p-3 rounded overflow-x-auto font-mono whitespace-pre-wrap break-words">
-													{formatJsonField(group.response.result)}
-												</pre>
-											</div>
-										)}
-
-										{/* Error */}
-										{group.error && (
-											<div className="mb-3">
-												<div className="text-sm text-foreground/70 mb-2 font-medium flex items-center gap-2">
-													<LucideXCircle className="h-3 w-3" />
-													Error:
-												</div>
-												<pre className="text-sm bg-red-400/10 border-red-200/20 border p-3 rounded overflow-x-auto font-mono whitespace-pre-wrap break-words">
-													{formatJsonField(group.error.error)}
-												</pre>
-											</div>
-										)}
-									</div>
-								)}
-							</div>
-						)
-					})
-				) : (
-					<div className="text-foreground/50 text-sm text-center justify-center items-center flex h-[90%] flex-1">
-						No MCP calls available
-					</div>
-				)}
-			</div>
-
-			{/* Footer */}
-			<div className="p-4 border-t border-accent bg-accent/30">
+		<MoreScrollContainer
+			className={className}
+			containerClassName="space-y-2"
+			header="History"
+			footer={
 				<div className="flex items-center justify-between text-sm">
 					<div className="flex items-center gap-4">
 						<div className="flex items-center gap-2">
@@ -332,7 +152,122 @@ export function McpCalls({ calls = [], className }: McpCallsProps) {
 					</div>
 					<div className="text-foreground/50">Total: {stats.total} calls</div>
 				</div>
-			</div>
-		</div>
+			}
+		>
+			{calls.length > 0 ? (
+				calls.map((group, index) => {
+					const type = getCallType(group)
+					const isExpanded = expandedItems.has(index)
+					const header = getCallHeader(group)
+					const isExpandable = hasExpandableContent(group)
+
+					return (
+						<div
+							key={index}
+							className="border border-accent/50 rounded-md bg-background/50 transition-colors hover:bg-background/80"
+						>
+							{/* Clickable Header */}
+							<div
+								className={`flex items-center justify-between p-3 transition-colors ${
+									isExpandable ? "cursor-pointer" : "cursor-default"
+								}`}
+								onClick={isExpandable ? () => toggleExpanded(index) : undefined}
+							>
+								<div className="flex items-center gap-2">
+									{isExpandable ? (
+										isExpanded ? (
+											<LucideChevronDown className="h-4 w-4 text-foreground/50" />
+										) : (
+											<LucideChevronRight className="h-4 w-4 text-foreground/50" />
+										)
+									) : (
+										<LucideDot className="h-4 w-4 text-foreground/50" />
+									)}
+									<Badge
+										className={`gap-0 px-2 py-1 w-8 h-8 rounded-full justify-center items-center text-sm transition-colors bg-transparent hover:bg-transparent ${
+											type === "error"
+												? "text-red-400"
+												: type === "success"
+													? "text-green-400"
+													: type === "pending"
+														? "text-yellow-400"
+														: " text-gray-400"
+										}`}
+									>
+										{getCallIcon(type)}
+									</Badge>
+									<span className="text-sm">{header}</span>
+								</div>
+								{group.id !== undefined && typeof group.id !== "string" && (
+									<Badge
+										variant="outline"
+										className="font-mono text-sm bg-acc border-border justify-center ml-auto mr-2"
+									>
+										ID: {String(group.id)}
+									</Badge>
+								)}
+								{group.timestamp && (
+									<div className="text-sm text-foreground/50 font-mono">
+										{new Date(group.timestamp).toLocaleTimeString()}
+									</div>
+								)}
+							</div>
+
+							{/* Expandable Content */}
+							{isExpandable && isExpanded && (
+								<div className="px-3 pb-3 pt-0 border-t border-accent/30">
+									{/* Request */}
+									{group.request && (
+										<div className="mb-3 mt-3">
+											<div className="text-sm text-foreground/70 mb-2 font-medium flex items-center gap-2">
+												<LucideArrowRight className="h-3 w-3" />
+												Request:
+											</div>
+											{group.request.params && (
+												<div className="mb-2">
+													<pre className="text-sm bg-blue-500/10 border-blue-400/20 p-3 rounded border overflow-x-auto font-mono whitespace-pre-wrap break-words">
+														{formatJsonField(group.request.params)}
+													</pre>
+												</div>
+											)}
+										</div>
+									)}
+
+									{/* Response */}
+									{group.response && (
+										<div className="mb-3">
+											<div className="text-sm text-foreground/70 mb-2 font-medium flex items-center gap-2">
+												<LucideArrowLeft className="h-3 w-3" />
+												Response:
+											</div>
+											<pre className="text-sm bg-green-500/10 border-green-400/20 border p-3 rounded overflow-x-auto font-mono whitespace-pre-wrap break-words">
+												{formatJsonField(group.response.result)}
+											</pre>
+										</div>
+									)}
+
+									{/* Error */}
+									{group.error && (
+										<div className="mb-3">
+											<div className="text-sm text-foreground/70 mb-2 font-medium flex items-center gap-2">
+												<LucideXCircle className="h-3 w-3" />
+												Error:
+											</div>
+											<pre className="text-sm bg-red-400/10 border-red-200/20 border p-3 rounded overflow-x-auto font-mono whitespace-pre-wrap break-words">
+												{formatJsonField(group.error.error)}
+											</pre>
+										</div>
+									)}
+								</div>
+							)}
+						</div>
+					)
+				})
+			) : (
+				<div className="text-foreground/50 text-sm text-center justify-center items-center flex h-[90%] flex-1">
+					No MCP calls available
+				</div>
+			)}
+		</MoreScrollContainer>
 	)
 }

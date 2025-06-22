@@ -1,22 +1,28 @@
 import { db } from "@/db/drizzle"
 import { instances } from "@/db/schema"
+import { Instance } from "@/db/schema/instances"
 import { auth } from "@/lib/auth"
 import { and, eq } from "drizzle-orm"
 import { headers } from "next/headers"
 import { NextResponse } from "next/server"
 import { z } from "zod"
 
-const DOMAIN = "dex.systems"
-const DOCKER_IMAGE = "mathom-node:22.12-alpine-mathom-proxy" // "mathon-node:22.12-alpine",
+const MATHOM_RUNTIME = process.env.MATHOM_RUNTIME
+const MATHOM_RUNTIME_URL = process.env.MATHOM_RUNTIME_URL!
+const DOCKER_IMAGES = {
+	generic: "",
+	node: "mathom-node:22.12-alpine-mathom-proxy",
+}
 // const DOCKER_IMAGE = "mathon-node:22.12-alpine" // "mathon-node:22.12-alpine",
 
-const domainMap = {
-	"@modelcontextprotocol/server-everything": "blue",
-	"@modelcontextprotocol/server-github": "green",
-}
+// const domainMap = {
+// 	"@modelcontextprotocol/server-everything": "blue",
+// 	"@modelcontextprotocol/server-github": "green",
+// }
 
 const RequestInput = z.object({
 	name: z.string(),
+	cmd: z.string().optional(),
 	args: z.array(z.string()),
 	runtime: z.enum(["node", "python", "bash"]).optional(),
 })
@@ -27,22 +33,64 @@ const ResponseOutput = z.object({
 })
 
 export const POST = async (req: Request) => {
-	const session = await auth.api.getSession({
-		headers: await headers(),
-	})
-	if (!session?.user) {
-		return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+	try {
+		const session = await auth.api.getSession({
+			headers: await headers(),
+		})
+		if (!session?.user) {
+			return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+		}
+
+		const body = await req.json()
+		const { name, image, cmd, args } = await getContainerDetails(RequestInput.parse(body))
+
+		const server = await createOrUpdateServer(name, cmd, args, session.user.id, image)
+
+		const run = await getRuntime(server).catch((e) => {
+			console.error("getRuntime error:", e)
+			return null
+		})
+		console.log({ run })
+
+		if (!run) {
+			return NextResponse.json(
+				{
+					error: "Container runtime offline",
+				},
+				{
+					status: 500,
+				},
+			)
+		}
+
+		return NextResponse.json({
+			id: server.id,
+			uri: run.url,
+		})
+	} catch (e) {
+		console.log(e)
 	}
+}
 
-	const body = await req.json()
-	const { name, args } = RequestInput.parse(body)
-
-	const server = await createOrUpdateServer(name, "npx", args, session.user.id, DOCKER_IMAGE)
-
-	return NextResponse.json({
-		id: server.id,
-		uri: `http://${server.slug}.${DOMAIN}:9090/sse`,
-	})
+const getRuntime = async (instance: Instance): Promise<{ url: string }> => {
+	if (!instance.apiKey) {
+		throw new Error("invalid apikey")
+	}
+	// local docker runtime
+	if (MATHOM_RUNTIME === "docker") {
+		const res = await fetch(MATHOM_RUNTIME_URL, {
+			method: "POST",
+			body: JSON.stringify(instance),
+			headers: {
+				"Content-Type": "application/json",
+				"x-api-key": instance.apiKey,
+			},
+		}).then((r) => r.json())
+		return {
+			url: res.url,
+		}
+	}
+	throw new Error("No runtime specified")
 }
 
 const createOrUpdateServer = async (
@@ -52,7 +100,7 @@ const createOrUpdateServer = async (
 	userId: string,
 	runtime: string,
 ) => {
-	const slug = domainMap[name as keyof typeof domainMap]
+	// const slug = domainMap[name as keyof typeof domainMap]
 
 	const existing = await db
 		.select()
@@ -78,16 +126,32 @@ const createOrUpdateServer = async (
 	const res = await db
 		.insert(instances)
 		.values({
-			userId: userId,
+			userId,
 			runtime,
 			name,
 			cmd,
 			args,
-			slug,
+			slug: "",
 			status: "pending",
 			apiKey: apiKeyResult.key,
 		})
 		.returning()
 
 	return res[0]
+}
+
+const getContainerDetails = async (input: z.infer<typeof RequestInput>) => {
+	if (input.cmd) {
+		return {
+			...input,
+			cmd: input.cmd!,
+			image: DOCKER_IMAGES.generic,
+		}
+	}
+	// default node
+	return {
+		...input,
+		cmd: "npx",
+		image: DOCKER_IMAGES.node,
+	}
 }

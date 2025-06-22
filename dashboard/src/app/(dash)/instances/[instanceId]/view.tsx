@@ -5,11 +5,15 @@ import { McpCalls } from "@/components/mcp-calls"
 import { McpTools } from "@/components/mcp-tools"
 import { ActivityChart } from "@/components/activity-chart"
 import { InstanceStatus } from "@/components/instance-status"
+import { MoreScrollContainer } from "@/components/ui/more-scroll-container"
+import { Button } from "@/components/ui/button"
+import { LucideArrowDown } from "lucide-react"
 import { Instance } from "@/db/schema"
 import { User } from "better-auth"
 import { EmptyInstances } from "@/components/empty-instances"
 import { useCmdLogs, useMcpLogs } from "@/hooks/use-instance-logs"
 import { parseMcpCalls } from "@/lib/mcp-parser"
+import { useCallback, useEffect, useRef, useState } from "react"
 
 interface ProcessEvent {
 	event: string
@@ -28,11 +32,12 @@ export function InstanceView({
 	instance: Instance
 }) {
 	const { data: cmdLogs, isLoading: cmdLoading, isError: cmdError } = useCmdLogs(instance.id!)
-
 	const { data: mcpLogs, isLoading: mcpLoading, isError: mcpError } = useMcpLogs(instance.id!)
 
-	const mcpCalls = parseMcpCalls(mcpLogs || [])
+	const statusContainerRef = useRef<HTMLDivElement>(null)
+	const [showMore, setShowMore] = useState(false)
 
+	const mcpCalls = parseMcpCalls(mcpLogs || [])
 	const logs = cmdLogs?.map((log) => log.message) || []
 
 	// Extract process events from logs
@@ -55,6 +60,38 @@ export function InstanceView({
 			}
 			return acc
 		}, [] as ProcessEvent[]) || []
+
+	const checkScrollPosition = useCallback(() => {
+		const container = statusContainerRef.current
+		if (!container) return
+
+		const { scrollTop, scrollHeight, clientHeight } = container
+		const isScrollable = scrollHeight > clientHeight
+		const isAtBottom = Math.abs(scrollHeight - clientHeight - scrollTop) < 5 // 5px tolerance
+
+		setShowMore(isScrollable && !isAtBottom)
+	}, [])
+
+	const handleScroll = useCallback(
+		(e: Event) => {
+			checkScrollPosition()
+		},
+		[checkScrollPosition],
+	)
+
+	useEffect(() => {
+		const container = statusContainerRef.current
+		if (container) {
+			container.addEventListener("scroll", handleScroll)
+			return () => container.removeEventListener("scroll", handleScroll)
+		}
+	}, [handleScroll])
+
+	useEffect(() => {
+		// Check scroll position when content changes
+		const timeoutId = setTimeout(checkScrollPosition, 100)
+		return () => clearTimeout(timeoutId)
+	}, [processEvents, checkScrollPosition])
 
 	return (
 		<div className="flex flex-col p-4 w-full">
@@ -82,7 +119,23 @@ export function InstanceView({
 					</div>
 				</div>
 
-				<div className="flex w-full flex-1 flex-col border-1 border-accent bg-accent/50 rounded-sm p-4">
+				<div className="relative flex w-full flex-1 flex-col border-1 border-accent bg-accent/50 rounded-sm p-4">
+					{showMore && (
+						<div className="flex absolute z-10 text-sm text-foreground/50 mt-2 bottom-4 left-0 right-0 items-center justify-center">
+							<Button
+								variant="secondary"
+								className="h-7 rounded-2xl shadow-2xl border-foreground/20 border text-foreground/80"
+								onClick={() => {
+									statusContainerRef.current?.scrollTo({
+										top: statusContainerRef.current.scrollHeight,
+										behavior: "smooth",
+									})
+								}}
+							>
+								More <LucideArrowDown className="ml-1 h-4 w-4" />
+							</Button>
+						</div>
+					)}
 					<div className="flex items-center justify-between border-b border-b-accent mb-2 pb-2">
 						<span>Status</span>
 						<InstanceStatus
@@ -91,9 +144,9 @@ export function InstanceView({
 							className="text-sm"
 						/>
 					</div>
-					{processEvents.length > 0 && (
-						<div className="space-y-1">
-							{processEvents.map((event, index) => (
+					<div ref={statusContainerRef} className="space-y-1 flex-1 overflow-y-auto max-h-45">
+						{processEvents.length > 0 ? (
+							processEvents.map((event, index) => (
 								<div key={index} className="relative flex items-center justify-between text-xs">
 									<div className="flex items-center gap-2">
 										<div
@@ -126,9 +179,13 @@ export function InstanceView({
 										<div className="absolute left-[4px] bottom-[-4px] w-[1px] h-[4px] bg-border"></div>
 									) : null}
 								</div>
-							))}
-						</div>
-					)}
+							))
+						) : (
+							<div className="text-foreground/50 text-sm text-center justify-center items-center flex h-full flex-1">
+								No process events
+							</div>
+						)}
+					</div>
 				</div>
 				<ActivityChart mcpCalls={mcpCalls} />
 			</div>

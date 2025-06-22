@@ -4,13 +4,14 @@ import { api } from "../../api"
 import { server } from "../../server"
 
 type Flags = {
+	cmd?: string
 	yes?: boolean
 }
 
 export const runCommand = buildCommand({
-	func: async (flags: Flags, cmd: string, ...args: string[]) => {
+	func: async (flags: Flags, name: string, ...args: string[]) => {
 		const cfg = config.get()
-		if (!cmd) {
+		if (!name) {
 			console.error("No command provided")
 			process.exit(1)
 		}
@@ -18,11 +19,12 @@ export const runCommand = buildCommand({
 			console.error("Please authenticate with: mcx auth login")
 			process.exit(1)
 		}
+		const cmd = flags.cmd
 
 		// ignore flags.yes as this runs from a MCP client
 
 		try {
-			const res = await api(cfg).run({ name: cmd, args: ["-y", ...args] })
+			const res = await api(cfg).run({ name, cmd, args: ["-y", ...args] })
 
 			const proxy = await server(cfg, res)
 		} catch (error: unknown) {
@@ -42,6 +44,11 @@ export const runCommand = buildCommand({
 			yes: {
 				brief: "Accept",
 				kind: "boolean",
+				optional: true,
+			},
+			cmd: {
+				brief: "Command",
+				kind: "string",
 				optional: true,
 			},
 		},
