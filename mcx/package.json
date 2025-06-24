@@ -36,10 +36,9 @@
     "minify": true
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.9.0",
+    "@modelcontextprotocol/sdk": "^1.13.1",
     "@stricli/auto-complete": "^1.1.2",
     "@stricli/core": "^1.1.2",
-    "mcp-remote": "0.1.14",
     "nanoid": "^5.1.5",
     "picocolors": "^1.1.1"
   },

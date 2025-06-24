@@ -26,7 +26,7 @@ export const runCommand = buildCommand({
 		try {
 			const res = await api(cfg).run({ name, cmd, args: ["-y", ...args] })
 
-			const proxy = await server(cfg, res)
+			await server(cfg, res)
 		} catch (error: unknown) {
 			if (error instanceof Error && error.message.includes("401 Unauthorized")) {
 				console.error("Unauthorized: Please authenticate with: mcx auth login")

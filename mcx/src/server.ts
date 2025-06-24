@@ -1,35 +1,34 @@
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
-import {
-	connectToRemoteServer,
-	log,
-	mcpProxy,
-	setupSignalHandlers,
-	// @ts-ignore
-} from "mcp-remote/dist/chunk-FBGYN3F2.js"
+import { connectToRemoteServer, log, mcpProxy, setupSignalHandlers } from "./transport.js"
 import type { ApiResponses } from "./api"
 import type { Config } from "./config"
 
 export async function server(cfg: Config, opts: ApiResponses["instances"]["run"]) {
 	const localTransport = new StdioServerTransport()
-	const headers = {
-		"x-api-key": cfg.accessToken,
+	const headers: Record<string, string> = {}
+	if (cfg.accessToken) {
+		headers["X-Api-Key"] = cfg.accessToken
 	}
-	const waitForAuthCode = () => null
-	const authInitializer = () => ({
-		waitForAuthCode,
-		skipBrowserAuth: true,
-	})
-	const authProvider = null
+	const waitForAuthCode = () => Promise.resolve("")
+	const authInitializer = () =>
+		Promise.resolve({
+			waitForAuthCode,
+			skipBrowserAuth: true,
+		})
+	const authProvider = undefined
 
 	try {
-		// Connect to remote server with authentication
+		log(`Connecting to MCP endpoint: ${opts.uri}`)
+		
+		// Connect to remote server with authentication (using null client like original)  
+		// Use http-only to force StreamableHTTP transport which properly handles HTTP+streamable
 		const remoteTransport = await connectToRemoteServer(
 			null,
 			opts.uri,
 			authProvider,
 			headers,
 			authInitializer,
-			"http-first",
+			"http-only",
 		)
 
 		// Set up bidirectional proxy between local and remote transports
@@ -38,10 +37,10 @@ export async function server(cfg: Config, opts: ApiResponses["instances"]["run"]
 			transportToServer: remoteTransport,
 		})
 
-		// Start the local STDIO server
+		// Start the local STDIO server AFTER remote connection is established
 		await localTransport.start()
 		log("Local STDIO server running")
-		log("Proxy established successfully between local STDIO and remote SSE")
+		log("Proxy established successfully between local STDIO and remote transport")
 		log("Press Ctrl+C to exit")
 
 		// Setup cleanup handler
