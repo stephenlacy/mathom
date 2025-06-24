@@ -48,7 +48,8 @@ export const runCommand = buildCommand({
 			},
 			cmd: {
 				brief: "Command",
-				kind: "string",
+				kind: "parsed",
+				parse: String,
 				optional: true,
 			},
 		},

@@ -49,8 +49,11 @@ export const api = (cfg: Config) => {
 	return {
 		run: async ({
 			name,
+			cmd,
 			args,
-		}: { name: string; args: string[] }): Promise<ApiResponses["instances"]["run"]> => {
+		}: { name: string; cmd?: string; args: string[] }): Promise<
+			ApiResponses["instances"]["run"]
+		> => {
 			return request<ApiResponses["instances"]["run"]>({
 				path: "/instances/run",
 				method: "POST",
@@ -58,6 +61,7 @@ export const api = (cfg: Config) => {
 				cfg,
 				body: {
 					name,
+					cmd,
 					args,
 				},
 			})

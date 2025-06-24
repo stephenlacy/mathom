@@ -15,7 +15,7 @@ export function Logs({ logs = [], className }: LogsProps) {
 			header="Logs"
 		>
 			{logsContent ? (
-				<pre className="whitespace-pre-wrap text-foreground/80 font-mono mt-2">
+				<pre className="whitespace-pre-wrap text-foreground/80 font-mono mt-2 overflow-hidden break-all max-w-full">
 					{logsContent}
 				</pre>
 			) : (

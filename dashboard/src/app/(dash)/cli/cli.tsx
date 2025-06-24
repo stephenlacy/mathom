@@ -3,72 +3,34 @@
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { useSearchParams, useRouter } from "next/navigation"
-import { useState, useEffect } from "react"
+import { useState } from "react"
+import { useVerifyCliCode, useCompleteCliAuth } from "@/hooks/use-cli-auth"
 
 export function CliAuth() {
 	const params = useSearchParams()
 	const router = useRouter()
-	const [error, setError] = useState<string | null>(null)
-	const [loading, setLoading] = useState(false)
-	const [codeValid, setCodeValid] = useState<boolean | null>(null)
 	const [isComplete, setIsComplete] = useState(false)
 
 	const termCode = params.get("code")
 
-	// Check if the code is valid on component mount
-	useEffect(() => {
-		if (!termCode) {
-			setCodeValid(false)
-			setError("No verification code provided")
-			return
-		}
+	// Use React Query to verify the code
+	const { 
+		data: verifyData, 
+		isLoading: isVerifying, 
+		error: verifyError 
+	} = useVerifyCliCode(termCode)
 
-		const verifyCode = async () => {
-			try {
-				const response = await fetch(`/api/v1/auth/cli-verification/${termCode}`)
-				if (response.ok) {
-					setCodeValid(true)
-				} else {
-					setCodeValid(false)
-					setError("Invalid or expired verification code")
-				}
-			} catch (err) {
-				setCodeValid(false)
-				setError("Unable to verify code")
-			}
-		}
-
-		verifyCode()
-	}, [termCode])
+	// Use React Query mutation for completing authentication
+	const completeAuthMutation = useCompleteCliAuth()
 
 	const confirmAuth = () => {
 		if (!termCode) return
 
-		setLoading(true)
-		setError(null)
-
-		fetch(`/api/v1/auth/cli-verification/${termCode}/complete`, {
-			method: "POST",
-			headers: {
-				"Content-Type": "application/json",
+		completeAuthMutation.mutate(termCode, {
+			onSuccess: () => {
+				setIsComplete(true)
 			},
 		})
-			.then((updateResponse) => {
-				if (!updateResponse.ok) {
-					return updateResponse.json().then((errorData) => {
-						throw new Error(errorData.error || "Unable to complete verification")
-					})
-				}
-				// Show success message
-				setError(null)
-				setIsComplete(true)
-			})
-			.catch((err) => {
-				setError(err instanceof Error ? err.message : "Authentication failed")
-			})
-			.finally(() => {
-				setLoading(false)
-			})
 	}
 
 	const cancel = () => {
@@ -76,7 +38,8 @@ export function CliAuth() {
 		router.push("/")
 	}
 
-	if (codeValid === null) {
+	// Handle loading state
+	if (isVerifying) {
 		return (
 			<div className="flex flex-1 justify-center items-center mb-100">
 				<Card>
@@ -88,7 +51,8 @@ export function CliAuth() {
 		)
 	}
 
-	if (codeValid === false) {
+	// Handle error state
+	if (verifyError || !termCode) {
 		return (
 			<div className="flex flex-1 justify-center items-center mb-100">
 				<Card>
@@ -157,11 +121,22 @@ export function CliAuth() {
 						<Button variant="secondary" onClick={cancel} size="lg">
 							Cancel
 						</Button>
-						<Button onClick={confirmAuth} disabled={loading} size="lg">
-							{loading ? "Confirming..." : "Confirm"}
+						<Button 
+							onClick={confirmAuth} 
+							disabled={completeAuthMutation.isPending} 
+							size="lg"
+						>
+							{completeAuthMutation.isPending ? "Confirming..." : "Confirm"}
 						</Button>
 					</div>
-					{error && <div className="text-red-500 text-sm mt-2 text-center">{error}</div>}
+					{completeAuthMutation.error && (
+						<div className="text-red-500 text-sm mt-2 text-center">
+							{completeAuthMutation.error instanceof Error 
+								? completeAuthMutation.error.message 
+								: "Authentication failed"
+							}
+						</div>
+					)}
 				</CardContent>
 			</Card>
 		</div>
