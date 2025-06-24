@@ -13,12 +13,6 @@ const DOCKER_IMAGES = {
 	generic: "",
 	node: "mathom-node:22.12-alpine-mathom-proxy",
 }
-// const DOCKER_IMAGE = "mathon-node:22.12-alpine" // "mathon-node:22.12-alpine",
-
-// const domainMap = {
-// 	"@modelcontextprotocol/server-everything": "blue",
-// 	"@modelcontextprotocol/server-github": "green",
-// }
 
 const RequestInput = z.object({
 	name: z.string(),
@@ -78,7 +72,7 @@ const getRuntime = async (instance: Instance): Promise<{ url: string }> => {
 	}
 	// local docker runtime
 	if (MATHOM_RUNTIME === "docker") {
-		const res = await fetch(MATHOM_RUNTIME_URL, {
+		const res = await fetch(MATHOM_RUNTIME_URL + "/run", {
 			method: "POST",
 			body: JSON.stringify(instance),
 			headers: {

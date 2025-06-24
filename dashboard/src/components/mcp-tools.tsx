@@ -1,11 +1,6 @@
 import { useState } from "react"
 import { Badge } from "./ui/badge"
-import {
-	LucideChevronDown,
-	LucideChevronRight,
-	LucideDot,
-	LucideWrench,
-} from "lucide-react"
+import { LucideChevronDown, LucideChevronRight, LucideDot, LucideWrench } from "lucide-react"
 import { MoreScrollContainer } from "./ui/more-scroll-container"
 import { McpCallGroup } from "@/lib/mcp-parser"
 

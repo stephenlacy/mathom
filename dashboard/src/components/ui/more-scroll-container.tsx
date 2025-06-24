@@ -13,12 +13,12 @@ interface MoreScrollContainerProps {
 	footer?: ReactNode
 }
 
-export function MoreScrollContainer({ 
-	children, 
+export function MoreScrollContainer({
+	children,
 	className,
 	containerClassName,
 	header,
-	footer
+	footer,
 }: MoreScrollContainerProps) {
 	const containerRef = useRef<HTMLDivElement>(null)
 	const [more, showMore] = useState(false)
@@ -58,7 +58,7 @@ export function MoreScrollContainer({
 	return (
 		<div
 			className={cn(
-				"relative flex flex-col border-1 border-accent bg-accent/50 h-[600px] max-h-[900px] w-full rounded-sm inset-shadow-md inset-shadow-accent",
+				"relative flex flex-col border-1 border-accent bg-accent/50 h-[650px] max-h-[900px] w-full rounded-sm inset-shadow-md inset-shadow-accent",
 				className,
 			)}
 		>
@@ -78,25 +78,17 @@ export function MoreScrollContainer({
 					</Button>
 				</div>
 			)}
-			
-			{header && (
-				<div className="p-4 border-b border-accent">
-					{header}
-				</div>
-			)}
-			
-			<div 
-				ref={containerRef} 
+
+			{header && <div className="p-4 border-b border-accent">{header}</div>}
+
+			<div
+				ref={containerRef}
 				className={cn("overflow-scroll h-full w-full p-4", containerClassName)}
 			>
 				{children}
 			</div>
-			
-			{footer && (
-				<div className="p-4 border-t border-accent bg-accent/30">
-					{footer}
-				</div>
-			)}
+
+			{footer && <div className="p-4 border-t border-accent bg-accent/30">{footer}</div>}
 		</div>
 	)
 }

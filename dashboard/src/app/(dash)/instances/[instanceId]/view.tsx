@@ -7,13 +7,14 @@ import { ActivityChart } from "@/components/activity-chart"
 import { InstanceStatus } from "@/components/instance-status"
 import { MoreScrollContainer } from "@/components/ui/more-scroll-container"
 import { Button } from "@/components/ui/button"
-import { LucideArrowDown } from "lucide-react"
+import { LucideArrowDown, Copy } from "lucide-react"
 import { Instance } from "@/db/schema"
 import { User } from "better-auth"
 import { EmptyInstances } from "@/components/empty-instances"
 import { useCmdLogs, useMcpLogs } from "@/hooks/use-instance-logs"
 import { parseMcpCalls } from "@/lib/mcp-parser"
 import { useCallback, useEffect, useRef, useState } from "react"
+import Link from "next/link"
 
 interface ProcessEvent {
 	event: string
@@ -93,6 +94,20 @@ export function InstanceView({
 		return () => clearTimeout(timeoutId)
 	}, [processEvents, checkScrollPosition])
 
+	const endpoint = `${process.env.NEXT_PUBLIC_MATHOM_RUNTIME_URL}/mcp/${instance.id}`
+
+	// ellipsis middle of long text
+	const ellipsisMiddle = (text: string, maxLength: number = 50) => {
+		if (text.length <= maxLength) return text
+		const start = Math.ceil(maxLength / 2) - 1
+		const end = Math.floor(maxLength / 2) - 2
+		return `${text.slice(0, start)}...${text.slice(-end)}`
+	}
+
+	const copyEndpoint = async () => {
+		await navigator.clipboard.writeText(endpoint)
+	}
+
 	return (
 		<div className="flex flex-col p-4 w-full">
 			<div className="flex gap-4">
@@ -116,6 +131,25 @@ export function InstanceView({
 					<div className="flex items-center justify-between">
 						<div className="">Arguments</div>
 						<div className="text-sm text-foreground/50">{JSON.stringify(instance.args || [])}</div>
+					</div>
+					<div className="flex items-center justify-between">
+						<div className="">Endpoint</div>
+						<div className="flex items-center gap-3 ml-4">
+							<div className="text-sm text-foreground/50" title={endpoint}>
+								<Link href={endpoint} target="_blank">
+									{ellipsisMiddle(endpoint)}
+								</Link>
+							</div>
+							<Button
+								variant="secondary"
+								size="sm"
+								className="h-6 w-6 p-0 hover:bg-accent"
+								onClick={copyEndpoint}
+								title="Copy endpoint"
+							>
+								<Copy className="h-3 w-3" />
+							</Button>
+						</div>
 					</div>
 				</div>
 

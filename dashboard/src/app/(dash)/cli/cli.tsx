@@ -14,10 +14,10 @@ export function CliAuth() {
 	const termCode = params.get("code")
 
 	// Use React Query to verify the code
-	const { 
-		data: verifyData, 
-		isLoading: isVerifying, 
-		error: verifyError 
+	const {
+		data: verifyData,
+		isLoading: isVerifying,
+		error: verifyError,
 	} = useVerifyCliCode(termCode)
 
 	// Use React Query mutation for completing authentication
@@ -121,20 +121,15 @@ export function CliAuth() {
 						<Button variant="secondary" onClick={cancel} size="lg">
 							Cancel
 						</Button>
-						<Button 
-							onClick={confirmAuth} 
-							disabled={completeAuthMutation.isPending} 
-							size="lg"
-						>
+						<Button onClick={confirmAuth} disabled={completeAuthMutation.isPending} size="lg">
 							{completeAuthMutation.isPending ? "Confirming..." : "Confirm"}
 						</Button>
 					</div>
 					{completeAuthMutation.error && (
 						<div className="text-red-500 text-sm mt-2 text-center">
-							{completeAuthMutation.error instanceof Error 
-								? completeAuthMutation.error.message 
-								: "Authentication failed"
-							}
+							{completeAuthMutation.error instanceof Error
+								? completeAuthMutation.error.message
+								: "Authentication failed"}
 						</div>
 					)}
 				</CardContent>

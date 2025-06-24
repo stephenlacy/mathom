@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button"
 import { Instance } from "@/db/schema"
 import { cn } from "@/lib/utils"
-import { ExternalLinkIcon } from "lucide-react"
+import { ExternalLinkIcon, Copy } from "lucide-react"
 import { useState } from "react"
 
 const clientConfig = {
@@ -20,6 +20,17 @@ export function EmptyInstances({
 }: { first: boolean; instance?: Partial<Instance> } & React.HTMLAttributes<HTMLDivElement>) {
 	const [activeTab, setActiveTab] = useState<"cursor" | "windsurf" | "claude">("claude")
 	const title = first ? "Launch your first MCP server:" : "Launch another MCP server:"
+
+	// Generate endpoint if instance exists
+	const endpoint = instance?.id
+		? `${process.env.NEXT_PUBLIC_MATHOM_RUNTIME_URL}/mcp/${instance.id}`
+		: null
+
+	const copyEndpoint = async () => {
+		if (endpoint) {
+			await navigator.clipboard.writeText(endpoint)
+		}
+	}
 
 	return (
 		<div
@@ -88,6 +99,24 @@ export function EmptyInstances({
 }`}
 					</pre>
 				</div>
+
+				{instance && endpoint && (
+					<div className="border-t pt-4">
+						<div className="text-xs text-foreground/60 mb-2">Server Endpoint:</div>
+						<div className="bg-background p-3 rounded-md border-1 border-border/50 flex items-center justify-between">
+							<code className="text-sm font-mono text-foreground/80 break-all">{endpoint}</code>
+							<Button
+								variant="secondary"
+								size="sm"
+								className="ml-3 h-8 w-8 p-0 hover:bg-accent flex-shrink-0"
+								onClick={copyEndpoint}
+								title="Copy endpoint"
+							>
+								<Copy className="h-4 w-4" />
+							</Button>
+						</div>
+					</div>
+				)}
 
 				<div className="flex items-center justify-center">
 					<Button className="uppercase">

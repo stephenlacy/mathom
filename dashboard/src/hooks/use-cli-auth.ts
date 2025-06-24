@@ -14,11 +14,11 @@ interface CompleteAuthResponse {
 // Query to verify a CLI code
 async function verifyCliCode(code: string): Promise<VerifyCodeResponse> {
 	const response = await fetch(`/api/v1/auth/cli-verification/${code}`)
-	
+
 	if (!response.ok) {
 		throw new Error("Invalid or expired verification code")
 	}
-	
+
 	return response.json()
 }
 
@@ -30,12 +30,12 @@ async function completeCliAuth(code: string): Promise<CompleteAuthResponse> {
 			"Content-Type": "application/json",
 		},
 	})
-	
+
 	if (!response.ok) {
 		const errorData = await response.json()
 		throw new Error(errorData.error || "Unable to complete verification")
 	}
-	
+
 	return response.json()
 }
 
@@ -51,7 +51,7 @@ export function useVerifyCliCode(code: string | null) {
 
 export function useCompleteCliAuth() {
 	const queryClient = useQueryClient()
-	
+
 	return useMutation({
 		mutationFn: completeCliAuth,
 		onSuccess: (data, code) => {
