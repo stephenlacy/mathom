@@ -37,8 +37,8 @@ export default async function AuthorizePage({
 
 	// Redirect to login if not authenticated
 	if (!session?.user) {
-		const returnTo = `/oauth/authorize?${new URLSearchParams(searchParamValues as Record<string, string>)}`
-		return redirect(`/sign-in?returnTo=${encodeURIComponent(returnTo)}`)
+		const redirectTo = `/oauth/authorize?${new URLSearchParams(searchParamValues as Record<string, string>)}`
+		return redirect(`/sign-in?redirectTo=${encodeURIComponent(redirectTo)}`)
 	}
 
 	const params = parseParams(searchParamValues)

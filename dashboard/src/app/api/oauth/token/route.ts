@@ -2,7 +2,9 @@ import { type NextRequest, NextResponse } from "next/server"
 import { handleTokenRequest } from "@/lib/oauth/helpers"
 
 export async function POST(request: NextRequest) {
-	return handleTokenRequest(request)
+	const res = await handleTokenRequest(request)
+	// console.log("Token request response:", await res.json())
+	return res
 }
 
 // Add OPTIONS method for CORS preflight requests

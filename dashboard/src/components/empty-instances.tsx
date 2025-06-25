@@ -21,7 +21,6 @@ export function EmptyInstances({
 	const [activeTab, setActiveTab] = useState<"cursor" | "windsurf" | "claude">("claude")
 	const title = first ? "Launch your first MCP server:" : "Launch another MCP server:"
 
-	// Generate endpoint if instance exists
 	const endpoint = instance?.id
 		? `${process.env.NEXT_PUBLIC_MATHOM_RUNTIME_URL}/mcp/${instance.id}`
 		: null

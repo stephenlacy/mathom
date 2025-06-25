@@ -22,11 +22,11 @@ export async function GET(request: NextRequest) {
 		if (!session || !session.user?.id) {
 			// Create the return URL with all OAuth parameters preserved
 			const url = new URL(request.url)
-			const returnTo = url.pathname + url.search
+			const redirectTo = url.pathname + url.search
 
 			// Encode the return URL and redirect to login
 			const loginUrl = new URL("/sign-in", request.url)
-			loginUrl.searchParams.set("returnTo", returnTo)
+			loginUrl.searchParams.set("redirectTo", redirectTo)
 
 			return NextResponse.redirect(loginUrl.toString())
 		}

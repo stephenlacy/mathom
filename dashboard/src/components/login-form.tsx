@@ -9,14 +9,18 @@ import { GithubIcon } from "lucide-react"
 import Image from "next/image"
 import { useState, type FormEvent } from "react"
 
-export function LoginForm({ className, ...props }: { className?: string }) {
+export function LoginForm({
+	className,
+	redirectTo,
+	...props
+}: { className?: string; redirectTo?: string }) {
 	const [email, setEmail] = useState("")
 	const [loading, setLoading] = useState(false)
 	const login = async () => {
 		setLoading(true)
 		const { data, error } = await authClient.signIn.magicLink({
 			email,
-			callbackURL: "/", //redirect after successful login (optional)
+			callbackURL: redirectTo && redirectTo.startsWith("/") ? redirectTo : "/", //redirect after successful login (optional)
 		})
 		setLoading(false)
 	}
@@ -26,6 +30,7 @@ export function LoginForm({ className, ...props }: { className?: string }) {
 		const data = await authClient.signIn
 			.social({
 				provider: "github",
+				callbackURL: redirectTo && redirectTo.startsWith("/") ? redirectTo : "/",
 			})
 			.catch(() => {
 				setLoading(false)
