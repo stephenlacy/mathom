@@ -13,7 +13,6 @@ export default async function InstancesPage() {
 	const user = await getUser()
 
 	const instances = await listInstances(user.id)
-	console.log({ instances })
 
 	return (
 		<div>

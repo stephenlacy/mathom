@@ -1,3 +1,4 @@
-export default function Page() {
-	return <div className="flex p-4">omg</div>
+import InstancesPage from "./instances/page"
+export default async function DashboardPage() {
+	return <InstancesPage />
 }

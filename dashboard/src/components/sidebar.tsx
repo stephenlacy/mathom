@@ -52,16 +52,16 @@ const links = [
 		href: "/",
 		icon: LayoutGridIcon,
 	},
-	{
-		name: "Instances",
-		href: "/instances",
-		icon: BotIcon, // SquarePlayIcon,
-	},
-	{
-		name: "Sessions",
-		href: "/sessions",
-		icon: SquarePlayIcon, // ChartNoAxesCombinedIcon,
-	},
+	// {
+	// 	name: "Instances",
+	// 	href: "/instances",
+	// 	icon: BotIcon, // SquarePlayIcon,
+	// },
+	// {
+	// 	name: "Sessions",
+	// 	href: "/sessions",
+	// 	icon: SquarePlayIcon, // ChartNoAxesCombinedIcon,
+	// },
 ]
 
 export function Sidebar() {
