@@ -2,10 +2,6 @@
 
 
 ```
-npx supabase init
-```
-
-```
 pnpm i
 
 pnpm db:generate

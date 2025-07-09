@@ -23,7 +23,9 @@ const request = async <T>({
 		headers["x-api-key"] = accessToken
 	}
 
-	return fetch(`${cfg.apiUrl || DEFAULT_API_URL}${path}`, {
+	const url = `${cfg.apiUrl || DEFAULT_API_URL}${path}`
+
+	return fetch(url, {
 		method,
 		headers,
 		body: ["POST", "PUT"].includes(method) ? JSON.stringify(body) : undefined,

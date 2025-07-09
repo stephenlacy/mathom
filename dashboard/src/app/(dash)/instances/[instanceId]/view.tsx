@@ -7,6 +7,7 @@ import { ActivityChart } from "@/components/activity-chart"
 import { InstanceStatus } from "@/components/instance-status"
 import { MoreScrollContainer } from "@/components/ui/more-scroll-container"
 import { Button } from "@/components/ui/button"
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { LucideArrowDown, Copy } from "lucide-react"
 import { Instance } from "@/db/schema"
 import { User } from "better-auth"
@@ -37,6 +38,7 @@ export function InstanceView({
 
 	const statusContainerRef = useRef<HTMLDivElement>(null)
 	const [showMore, setShowMore] = useState(false)
+	const [copied, setCopied] = useState(false)
 
 	const mcpCalls = parseMcpCalls(mcpLogs || [])
 	const logs = cmdLogs?.map((log) => log.message) || []
@@ -106,6 +108,8 @@ export function InstanceView({
 
 	const copyEndpoint = async () => {
 		await navigator.clipboard.writeText(endpoint)
+		setCopied(true)
+		setTimeout(() => setCopied(false), 2000)
 	}
 
 	return (
@@ -140,15 +144,19 @@ export function InstanceView({
 									{ellipsisMiddle(endpoint)}
 								</Link>
 							</div>
-							<Button
-								variant="secondary"
-								size="sm"
-								className="h-6 w-6 p-0 hover:bg-accent"
-								onClick={copyEndpoint}
-								title="Copy endpoint"
-							>
-								<Copy className="h-3 w-3" />
-							</Button>
+							<Tooltip open={copied}>
+								<TooltipTrigger asChild>
+									<Button
+										variant="secondary"
+										size="sm"
+										className="h-6 w-6 p-0 hover:bg-accent"
+										onClick={copyEndpoint}
+									>
+										<Copy className="h-3 w-3" />
+									</Button>
+								</TooltipTrigger>
+								<TooltipContent>Copied!</TooltipContent>
+							</Tooltip>
 						</div>
 					</div>
 				</div>

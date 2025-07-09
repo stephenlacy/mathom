@@ -22,22 +22,38 @@ function handleApiRoute(session: any, error?: any) {
 	return NextResponse.next()
 }
 
+async function handleApiRoutes(request: NextRequest, pathname: string) {
+	// Allow all API routes to handle their own authentication
+	return NextResponse.next()
+}
+
 export async function middleware(request: NextRequest) {
 	const { pathname } = request.nextUrl
 
-	// Allow anonymous access to CLI verification endpoints
-	if (pathname.startsWith("/api/v1/auth/cli-verification")) {
-		return NextResponse.next()
-	}
-
-	// Handle API routes
-	if (pathname.startsWith("/api/v1/")) {
-		try {
-			const session = await getSession()
-			return handleApiRoute(session)
-		} catch (error: any) {
-			return handleApiRoute(null, error)
+	// Handle CORS for all API routes
+	if (pathname.startsWith("/api/")) {
+		// Handle preflight requests
+		if (request.method === "OPTIONS") {
+			return new NextResponse(null, {
+				status: 204,
+				headers: {
+					"Access-Control-Allow-Origin": "*",
+					"Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, PATCH, OPTIONS",
+					"Access-Control-Allow-Headers": "Content-Type, Authorization, mcp-protocol-version",
+					"Access-Control-Max-Age": "86400",
+				},
+			})
 		}
+
+		// Add CORS headers to all API responses
+		const response = await handleApiRoutes(request, pathname)
+		response.headers.set("Access-Control-Allow-Origin", "*")
+		response.headers.set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, PATCH, OPTIONS")
+		response.headers.set(
+			"Access-Control-Allow-Headers",
+			"Content-Type, Authorization, mcp-protocol-version",
+		)
+		return response
 	}
 
 	// Handle page routes
@@ -71,5 +87,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-	matcher: ["/api/v1/:path*", "/", "/dash/:path*", "/sign-in", "/sign-up"],
+	matcher: ["/api/:path*", "/", "/dash/:path*", "/sign-in", "/sign-up"],
 }

@@ -221,7 +221,7 @@ export function McpCalls({ calls = [], className }: McpCallsProps) {
 										<div className="mb-3 mt-3">
 											<div className="text-sm text-foreground/70 mb-2 font-medium flex items-center gap-2">
 												<LucideArrowRight className="h-3 w-3" />
-												Request:
+												{group.method?.startsWith("notifications/") ? "Message:" : "Request:"}
 											</div>
 											{group.request.params && (
 												<div className="mb-2">

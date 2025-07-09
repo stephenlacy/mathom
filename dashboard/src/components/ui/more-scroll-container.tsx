@@ -58,7 +58,7 @@ export function MoreScrollContainer({
 	return (
 		<div
 			className={cn(
-				"relative flex flex-col border-1 border-accent bg-accent/50 h-[650px] max-h-[900px] w-full rounded-sm inset-shadow-md inset-shadow-accent",
+				"relative flex flex-col border-1 border-accent bg-accent/50 h-[650px] max-h-[900px] w-full rounded-sm inset-shadow-md inset-shadow-accent overflow-hidden",
 				className,
 			)}
 		>
@@ -83,7 +83,7 @@ export function MoreScrollContainer({
 
 			<div
 				ref={containerRef}
-				className={cn("overflow-scroll h-full w-full p-4", containerClassName)}
+				className={cn("overflow-scroll h-full w-full p-4 pb-18", containerClassName)}
 			>
 				{children}
 			</div>

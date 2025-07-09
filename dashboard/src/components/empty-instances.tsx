@@ -1,6 +1,7 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { Instance } from "@/db/schema"
 import { cn } from "@/lib/utils"
 import { ExternalLinkIcon, Copy } from "lucide-react"
@@ -19,6 +20,7 @@ export function EmptyInstances({
 	...rest
 }: { first: boolean; instance?: Partial<Instance> } & React.HTMLAttributes<HTMLDivElement>) {
 	const [activeTab, setActiveTab] = useState<"cursor" | "windsurf" | "claude">("claude")
+	const [copied, setCopied] = useState(false)
 	const title = first ? "Launch your first MCP server:" : "Launch another MCP server:"
 
 	const endpoint = instance?.id
@@ -28,6 +30,8 @@ export function EmptyInstances({
 	const copyEndpoint = async () => {
 		if (endpoint) {
 			await navigator.clipboard.writeText(endpoint)
+			setCopied(true)
+			setTimeout(() => setCopied(false), 2000)
 		}
 	}
 
@@ -48,7 +52,7 @@ export function EmptyInstances({
 					<div className="p-4 border-b border-accent text-foreground/80 font-bold">
 						This is your workspace
 					</div>
-					<div className="p-4">
+					<div className="p-4 pb-0">
 						<p className="text-foreground">{title}</p>
 					</div>
 				</>
@@ -104,15 +108,19 @@ export function EmptyInstances({
 						<div className="text-xs text-foreground/60 mb-2">Server Endpoint:</div>
 						<div className="bg-background p-3 rounded-md border-1 border-border/50 flex items-center justify-between">
 							<code className="text-sm font-mono text-foreground/80 break-all">{endpoint}</code>
-							<Button
-								variant="secondary"
-								size="sm"
-								className="ml-3 h-8 w-8 p-0 hover:bg-accent flex-shrink-0"
-								onClick={copyEndpoint}
-								title="Copy endpoint"
-							>
-								<Copy className="h-4 w-4" />
-							</Button>
+							<Tooltip open={copied}>
+								<TooltipTrigger asChild>
+									<Button
+										variant="secondary"
+										size="sm"
+										className="ml-3 h-8 w-8 p-0 hover:bg-accent flex-shrink-0"
+										onClick={copyEndpoint}
+									>
+										<Copy className="h-4 w-4" />
+									</Button>
+								</TooltipTrigger>
+								<TooltipContent>Copied!</TooltipContent>
+							</Tooltip>
 						</div>
 					</div>
 				)}

@@ -1,0 +1,30 @@
+# syntax=docker.io/docker/dockerfile:1
+
+FROM node:22-alpine
+
+WORKDIR /app
+
+COPY package.json pnpm-lock.yaml* ./
+RUN corepack enable pnpm && pnpm i
+
+COPY src ./src
+COPY migrations ./migrations
+COPY public ./public
+COPY drizzle.config.ts .
+COPY next.config.ts .
+COPY tsconfig.json .
+COPY postcss.config.mjs .
+
+ARG BETTER_AUTH_SECRET
+ENV BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET}
+ARG BETTER_AUTH_URL
+ENV BETTER_AUTH_URL=${BETTER_AUTH_URL}
+ARG DATABASE_URL
+ENV DATABASE_URL=${DATABASE_URL}
+ARG MATHOM_RUNTIME_URL
+ENV MATHOM_RUNTIME_URL=${MATHOM_RUNTIME_URL}
+ARG NEXT_PUBLIC_MATHOM_RUNTIME_URL
+ENV NEXT_PUBLIC_MATHOM_RUNTIME_URL=${NEXT_PUBLIC_MATHOM_RUNTIME_URL}
+ENV MODE=local
+
+ENV NEXT_TELEMETRY_DISABLED 1

@@ -48,9 +48,9 @@ import { Button } from "./ui/button"
 
 const links = [
 	{
-		name: "Dashboard",
+		name: "Instances",
 		href: "/",
-		icon: LayoutGridIcon,
+		icon: BotIcon,
 	},
 	// {
 	// 	name: "Instances",

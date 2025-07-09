@@ -1,11 +1,45 @@
 services:
+
+  dashboard:
+    build: 
+      dockerfile: ./Dashboard.Dockerfile
+      args:
+        BETTER_AUTH_SECRET: TvHZtJnnzEXbFhyq3IZeD5WUyBWowqwy
+        BETTER_AUTH_URL: http://dashboard:5050
+        DATABASE_URL: 'postgresql://postgres:postgres@postgres:5432/main'
+        MATHOM_RUNTIME: 'docker'
+        MATHOM_RUNTIME_URL: "http://runtime:9090"
+        NEXT_PUBLIC_MATHOM_RUNTIME_URL: "http://localhost:9090"
+        NODE_ENV: 'production'
+    command: sh -c 'pnpm run db:migrate && pnpm dev'
+    ports:
+      - '5050:5050'
+    environment:
+      - BETTER_AUTH_SECRET=TvHZtJnnzEXbFhyq3IZeD5WUyBWowqwy
+      - BETTER_AUTH_URL=http://dashboard:5050
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/main
+      - MATHOM_RUNTIME=docker
+      - MATHOM_RUNTIME_URL=http://runtime:9090
+      - NEXT_PUBLIC_MATHOM_RUNTIME_URL=http://localhost:9090
+      - NODE_ENV=production
+      - HOSTNAME=0.0.0.0
+      - PORT=5050
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+
+    # environment:
+    #   - LOG_URL='http://dashboard:5050/api/v1/instances'
+
+
   postgres:
     image: postgres:17
     command: '-d 1'
     volumes:
       - db_data:/var/lib/postgresql/data
     ports:
-      - '54321:5432'
+      - '54320:5432'
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
@@ -16,15 +50,15 @@ services:
       timeout: 5s
       retries: 5
 
-  neon-proxy:
-    image: ghcr.io/timowilhelm/local-neon-http-proxy:main
-    environment:
-      - PG_CONNECTION_STRING=postgres://postgres:postgres@postgres:54321/main
-    ports:
-      - '4444:4444'
-    depends_on:
-      postgres:
-        condition: service_healthy
+  # neon-proxy:
+  #   image: ghcr.io/timowilhelm/local-neon-http-proxy:main
+  #   environment:
+  #     - PG_CONNECTION_STRING=postgres://postgres:postgres@postgres:54320/main
+  #   ports:
+  #     - '4444:4444'
+  #   depends_on:
+  #     postgres:
+  #       condition: service_healthy
 
 volumes:
   db_data:

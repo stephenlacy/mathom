@@ -6,15 +6,16 @@ import { redirect } from "next/navigation"
 export default async function CliPage({
 	searchParams,
 }: {
-	searchParams: { code?: string }
+	searchParams: Promise<{ code?: string }>
 }) {
 	const session = await auth.api.getSession({ headers: await headers() })
 
 	if (!session?.user) {
 		// Redirect to sign-in with the CLI parameters preserved
 		const params = new URLSearchParams()
-		if (searchParams.code) {
-			params.set("redirect", `/cli?code=${searchParams.code}`)
+		const search = await searchParams
+		if (search.code) {
+			params.set("redirect", `/cli?code=${search.code}`)
 		}
 		return redirect(`/sign-in?${params.toString()}`)
 	}
