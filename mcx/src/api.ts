@@ -1,7 +1,6 @@
 import { config, type Config } from "./config"
 
 const DEFAULT_TIMEOUT = 20000
-export const DEFAULT_API_URL = "http://localhost:5050/api/v1"
 
 const request = async <T>({
 	path,
@@ -23,7 +22,7 @@ const request = async <T>({
 		headers["x-api-key"] = accessToken
 	}
 
-	const url = `${cfg.apiUrl || DEFAULT_API_URL}${path}`
+	const url = `${cfg.apiUrl}${path}`
 
 	return fetch(url, {
 		method,

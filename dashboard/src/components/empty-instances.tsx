@@ -59,15 +59,67 @@ export function EmptyInstances({
 			)}
 
 			<div className="flex flex-col p-4 gap-4">
-				<div className="bg-accent/80 p-4 rounded-md text-sm font-mono text-foreground/80 border-1 border-solid border-accent">
-					<pre>
-						{instance
-							? `mcx -y ${instance.name}`
-							: first
-								? `npm i -g mcx\nmcx auth login\nmcx -y my-mcp-server`
-								: `mcx -y my-mcp-server`}
-					</pre>
-				</div>
+				{typeof window !== "undefined" && window.location.hostname === "localhost" && (
+					<div className="bg-blue-500/10 border border-blue-400/20 p-4 rounded-md">
+						<div className="flex items-center gap-2 mb-2">
+							<div className="w-2 h-2 bg-blue-400 rounded-full"></div>
+							<span className="text-sm font-semibold text-blue-400">Local Mode</span>
+						</div>
+						<p className="text-sm text-foreground/80 mb-3">
+							Set this environment variable before running mcx:
+						</p>
+						<div className="bg-background/50 p-3 rounded border border-blue-400/20">
+							<pre className="text-sm font-mono text-foreground">
+								MATHOM_URL=http://localhost:5050
+							</pre>
+						</div>
+						<p className="text-xs text-foreground/60 my-2">
+							This connects mcx to your local instance.
+							<br />
+							Usage:
+						</p>
+						<div className="bg-background/50 p-3 rounded border border-blue-400/20">
+							<pre className="text-sm font-mono text-foreground">
+								export MATHOM_URL=http://localhost:5050{"\n"}mcx -y my-mcp-server
+							</pre>
+						</div>
+					</div>
+				)}
+				{first && (
+					<div className="bg-green-500/10 border border-green-400/20 p-3 rounded-md">
+						<div className="flex items-center gap-2 mb-2">
+							<div className="w-2 h-2 bg-green-400 rounded-full"></div>
+							<span className="text-sm font-semibold text-green-400">Install mcx CLI</span>
+						</div>
+						<div className="bg-background/50 p-2 rounded border border-green-400/20">
+							<code className="text-sm font-mono text-foreground">npm i -g mcx</code>
+						</div>
+					</div>
+				)}
+
+				{first && (
+					<div className="bg-purple-500/10 border border-purple-400/20 p-3 rounded-md">
+						<div className="flex items-center gap-2 mb-2">
+							<div className="w-2 h-2 bg-purple-400 rounded-full"></div>
+							<span className="text-sm font-semibold text-purple-400">Authenticate</span>
+						</div>
+						<div className="bg-background/50 p-2 rounded border border-purple-400/20">
+							<code className="text-sm font-mono text-foreground">mcx auth login</code>
+						</div>
+					</div>
+				)}
+
+				{first && (
+					<div className="bg-orange-500/10 border border-orange-400/20 p-3 rounded-md">
+						<div className="flex items-center gap-2 mb-2">
+							<div className="w-2 h-2 bg-orange-400 rounded-full"></div>
+							<span className="text-sm font-semibold text-orange-400">Launch Server</span>
+						</div>
+						<div className="bg-background/50 p-2 rounded border border-orange-400/20">
+							<code className="text-sm font-mono text-foreground">mcx -y my-mcp-server</code>
+						</div>
+					</div>
+				)}
 
 				<div className="flex gap-2">
 					<ClientTab
@@ -92,7 +144,19 @@ export function EmptyInstances({
 				</div>
 				<div className="bg-background p-4 rounded-md text-sm font-mono text-foreground/80 border-1 border-solid border-border/50">
 					<pre className="whitespace-pre-wrap break-words">
-						{`{
+						{typeof window !== "undefined" && window.location.hostname === "localhost"
+							? `{
+  mcpServers: {
+    myMCPServer: {
+      command: "mcx",
+      args: ["-y", ${instance ? `"${instance.name}"` : `"my-mcp-server"`}],
+      env: {
+        "MATHOM_URL": "http://localhost:5050"
+      }
+    }
+  }
+}`
+							: `{
   mcpServers: {
     myMCPServer: {
       command: "mcx",
@@ -125,11 +189,11 @@ export function EmptyInstances({
 					</div>
 				)}
 
-				<div className="flex items-center justify-center">
-					<Button className="uppercase">
-						View Docs <ExternalLinkIcon className="mb-[2px]" />
-					</Button>
-				</div>
+				{/* <div className="flex items-center justify-center"> */}
+				{/* 	<Button className="uppercase"> */}
+				{/* 		View Docs <ExternalLinkIcon className="mb-[2px]" /> */}
+				{/* 	</Button> */}
+				{/* </div> */}
 			</div>
 		</div>
 	)

@@ -120,7 +120,14 @@ function UserMenu() {
 	}
 	const user = session.user
 
-	const initials = `${user.email.charAt(0)}${user.email.charAt(1)}`
+	// Check if user is anonymous (based on the isAnonymous field or anonymous email pattern)
+	const isAnonymous = user.isAnonymous || !user.email || user.email.includes('@anonymous.')
+	
+	// Use "local" for anonymous users, otherwise use actual user data
+	const displayName = isAnonymous ? "local" : (user.name || user.email)
+	const displayEmail = isAnonymous ? "local" : user.email
+	
+	const initials = isAnonymous ? "LO" : `${displayEmail.charAt(0)}${displayEmail.charAt(1)}`
 
 	return (
 		<SidebarMenu>
@@ -135,8 +142,8 @@ function UserMenu() {
 								<AvatarFallback className="rounded-lg">{initials}</AvatarFallback>
 							</Avatar>
 							<div className="grid flex-1 text-left text-sm leading-tight">
-								<span className="truncate font-medium">{user.name}</span>
-								<span className="truncate text-xs text-muted-foreground">{user.email}</span>
+								<span className="truncate font-medium">{displayName}</span>
+								<span className="truncate text-xs text-muted-foreground">{displayEmail}</span>
 							</div>
 							<MoreVerticalIcon className="ml-auto size-4" />
 						</SidebarMenuButton>
@@ -153,8 +160,8 @@ function UserMenu() {
 									<AvatarFallback className="rounded-lg">{initials}</AvatarFallback>
 								</Avatar>
 								<div className="grid flex-1 text-left text-sm leading-tight">
-									<span className="truncate font-medium">{user.name}</span>
-									<span className="truncate text-xs text-muted-foreground">{user.email}</span>
+									<span className="truncate font-medium">{displayName}</span>
+									<span className="truncate text-xs text-muted-foreground">{displayEmail}</span>
 								</div>
 							</div>
 						</DropdownMenuLabel>

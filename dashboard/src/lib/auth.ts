@@ -1,10 +1,28 @@
 import { db } from "@/db/drizzle"
 import { betterAuth } from "better-auth"
 import { drizzleAdapter } from "better-auth/adapters/drizzle"
-import { apiKey, bearer, jwt, magicLink } from "better-auth/plugins"
+import { apiKey, bearer, jwt, magicLink, anonymous } from "better-auth/plugins"
 import * as schema from "@/db/schema"
+import { users } from "@/db/schema/auth"
 import { headers } from "next/headers"
 import { redirect } from "next/navigation"
+
+const plugins = [
+	apiKey({
+		permissions: {
+			defaultPermissions: {
+				logs: ["read"],
+			},
+		},
+	}),
+	bearer(),
+	magicLink({
+		sendMagicLink: async ({ email, token, url }) => {
+			console.log({ email, token, url })
+		},
+	}),
+	...(process.env.MODE === "local" ? [anonymous()] : []),
+]
 
 export const auth = betterAuth({
 	socialProviders: {
@@ -16,9 +34,6 @@ export const auth = betterAuth({
 	advanced: {
 		generateId: false,
 		cookiePrefix: "runreal",
-		database: {
-			generateId: false,
-		},
 	},
 	session: {
 		cookieCache: {
@@ -26,22 +41,7 @@ export const auth = betterAuth({
 			maxAge: 30 * 60, // in seconds
 		},
 	},
-	plugins: [
-		// jwt(),
-		apiKey({
-			permissions: {
-				defaultPermissions: {
-					logs: ["read"],
-				},
-			},
-		}),
-		bearer(),
-		magicLink({
-			sendMagicLink: async ({ email, token, url }) => {
-				console.log({ email, token, url })
-			},
-		}),
-	],
+	plugins,
 	database: drizzleAdapter(db, {
 		provider: "pg",
 		schema: { ...schema, apikeys: schema.apiKeys },

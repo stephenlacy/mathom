@@ -1,0 +1,12 @@
+FROM node:22.12-alpine
+
+RUN apk add --no-cache curl build-base pkgconfig openssl libressl-dev
+
+RUN curl https://sh.rustup.rs -sSf | sh -s -- -y
+
+RUN source $HOME/.cargo/env
+
+ENV PATH="/root/.cargo/bin:$PATH"
+
+# RUN cargo install rmcp-proxy
+RUN cargo install --git https://github.com/stephenlacy/mathom-proxy#c2d2df8ac094bc25988701b3a18637a9e64447c7

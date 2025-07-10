@@ -71,6 +71,13 @@
       "when": 1750300936584,
       "tag": "0009_supreme_energizer",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1752041455138,
+      "tag": "0010_odd_golden_guardian",
+      "breakpoints": true
     }
   ]
 }

@@ -7,7 +7,8 @@ import { Label } from "@/components/ui/label"
 import { cn } from "@/lib/utils"
 import { GithubIcon } from "lucide-react"
 import Image from "next/image"
-import { useState, type FormEvent } from "react"
+import { useState, useEffect, type FormEvent } from "react"
+import { useRouter } from "next/navigation"
 
 export function LoginForm({
 	className,
@@ -16,6 +17,32 @@ export function LoginForm({
 }: { className?: string; redirectTo?: string }) {
 	const [email, setEmail] = useState("")
 	const [loading, setLoading] = useState(false)
+	const router = useRouter()
+
+	useEffect(() => {
+		const autoSignInLocal = async () => {
+			// Check if we're in local mode by checking the hostname
+			const isLocal = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
+			
+			if (isLocal) {
+				console.log("Local mode detected, attempting auto-login...")
+				try {
+					setLoading(true)
+					const result = await authClient.signIn.anonymous()
+					console.log("Auto-login successful:", result)
+					
+					// Redirect to the intended destination or home
+					const redirectUrl = redirectTo && redirectTo.startsWith("/") ? redirectTo : "/"
+					router.push(redirectUrl)
+				} catch (error) {
+					console.error("Auto-login failed:", error)
+					setLoading(false)
+				}
+			}
+		}
+
+		autoSignInLocal()
+	}, [redirectTo, router])
 	const login = async () => {
 		setLoading(true)
 		const { data, error } = await authClient.signIn.magicLink({
@@ -35,6 +62,26 @@ export function LoginForm({
 			.catch(() => {
 				setLoading(false)
 			})
+	}
+
+	if (loading && window.location.hostname === "localhost") {
+		return (
+			<div className={cn("flex flex-col gap-6 font-mono", className)} {...props}>
+				<Card className="w-full border-accent">
+					<CardHeader>
+						<Image
+							src={"/logo.png"}
+							alt="Logo"
+							width={100}
+							height={100}
+							className="w-20 h-20 mx-auto mb-4 border-3 border-accent shadow-md rounded-sm"
+						/>
+						<CardTitle className="text-2xl uppercase">Auto-signing in...</CardTitle>
+						<CardDescription>Detected local development mode</CardDescription>
+					</CardHeader>
+				</Card>
+			</div>
+		)
 	}
 
 	return (

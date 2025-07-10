@@ -7,6 +7,7 @@ export const users = pgTable("users", {
 	email: text("email").notNull().unique(),
 	emailVerified: boolean("email_verified").notNull(),
 	image: text("image"),
+	isAnonymous: boolean("is_anonymous"),
 })
 
 export const sessions = pgTable("sessions", {

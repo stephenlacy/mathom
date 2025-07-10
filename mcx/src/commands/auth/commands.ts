@@ -3,7 +3,6 @@ import color from "picocolors"
 import { config } from "../../config"
 import { spawn } from "node:child_process"
 import { customAlphabet } from "nanoid"
-import { DEFAULT_API_URL } from "../../api"
 const nanoid = customAlphabet("ABCDEFGHJKLMNPQRSTUVWXYZ", 6)
 
 type Flags = {}
@@ -41,7 +40,7 @@ const displayCliVibes = (code: string) => {
 
 const createVerification = async (code: string) => {
 	const cfg = config.get()
-	const apiUrl = cfg.apiUrl || DEFAULT_API_URL
+	const apiUrl = cfg.apiUrl
 
 	const response = await fetch(`${apiUrl}/auth/cli-verification`, {
 		method: "POST",
@@ -60,7 +59,7 @@ const createVerification = async (code: string) => {
 
 const pollForCompletion = async (code: string): Promise<string> => {
 	const cfg = config.get()
-	const apiUrl = cfg.apiUrl || DEFAULT_API_URL
+	const apiUrl = cfg.apiUrl
 
 	for (let i = 0; i < 60; i++) {
 		try {
@@ -92,7 +91,7 @@ export const loginCommand = buildCommand({
 		try {
 			const code = nanoid()
 			const cfg = config.get()
-			const baseUrl = (cfg.apiUrl || DEFAULT_API_URL).replace("/api/v1", "")
+			const baseUrl = cfg.apiUrl!.replace("/api/v1", "")
 
 			await createVerification(code)
 

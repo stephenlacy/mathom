@@ -29,8 +29,9 @@ services:
         condition: service_healthy
 
 
-    # environment:
-    #   - LOG_URL='http://dashboard:5050/api/v1/instances'
+  runtime:
+    environment:
+      - LOG_URL=http://dashboard:5050/api/v1/instances
 
 
   postgres:
@@ -50,15 +51,6 @@ services:
       timeout: 5s
       retries: 5
 
-  # neon-proxy:
-  #   image: ghcr.io/timowilhelm/local-neon-http-proxy:main
-  #   environment:
-  #     - PG_CONNECTION_STRING=postgres://postgres:postgres@postgres:54320/main
-  #   ports:
-  #     - '4444:4444'
-  #   depends_on:
-  #     postgres:
-  #       condition: service_healthy
 
 volumes:
   db_data:

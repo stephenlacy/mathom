@@ -94,8 +94,6 @@ const createOrUpdateServer = async (
 	userId: string,
 	runtime: string,
 ) => {
-	// const slug = domainMap[name as keyof typeof domainMap]
-
 	const existing = await db
 		.select()
 		.from(instances)
