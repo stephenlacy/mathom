@@ -3,6 +3,7 @@ import { betterAuth } from "better-auth"
 import { drizzleAdapter } from "better-auth/adapters/drizzle"
 import { apiKey, bearer, jwt, magicLink } from "better-auth/plugins"
 import { localAnonymous } from "./plugins/local-anonymous"
+import { config } from "./config"
 import * as schema from "@/db/schema"
 import { users } from "@/db/schema/auth"
 import { headers } from "next/headers"
@@ -23,7 +24,7 @@ const plugins = [
 			console.log({ email, token, url })
 		},
 	}),
-	...(process.env.MODE === "local" ? [localAnonymous()] : []),
+	...(config.isLocal ? [localAnonymous()] : []),
 ]
 
 export const auth = betterAuth({
@@ -35,9 +36,6 @@ export const auth = betterAuth({
 	},
 	advanced: {
 		generateId: ({ model }) => {
-			if (process.env.MODE === "local" && model === "user") {
-				return "user_01k0t0kncff6e9bbwgb26rekqt"
-			}
 			return typeid(model).toString()
 		},
 		cookiePrefix: "mathom",
@@ -55,6 +53,7 @@ export const auth = betterAuth({
 		usePlural: true,
 	}),
 })
+
 
 export async function getUser() {
 	const session = await auth.api.getSession({

@@ -2,6 +2,7 @@ import { createAuthEndpoint } from "better-auth/api"
 import type { BetterAuthPlugin, User, AuthPluginSchema, InferOptionSchema } from "better-auth"
 import { setSessionCookie } from "better-auth/cookies"
 import { mergeSchema } from "better-auth/db"
+import { config } from "../config"
 
 export interface UserWithAnonymous extends User {
 	isAnonymous: boolean
@@ -70,13 +71,13 @@ export const localAnonymous = (options?: LocalAnonymousOptions) => {
 					},
 				},
 				async (ctx) => {
-					if (process.env.MODE !== "local") {
+					if (!config.isLocal) {
 						throw ctx.error("BAD_REQUEST", {
 							message: ERROR_CODES.NOT_LOCAL_MODE,
 						})
 					}
 
-					// First try to find existing user
+					// Try to find existing user by email
 					let user: UserWithAnonymous | null = null
 					try {
 						const userResult = await ctx.context.internalAdapter.findUserByEmail(STATIC_EMAIL)
@@ -86,23 +87,41 @@ export const localAnonymous = (options?: LocalAnonymousOptions) => {
 					}
 
 					if (!user) {
-						const newUser = await ctx.context.internalAdapter.createUser(
-							{
-								email: STATIC_EMAIL,
-								emailVerified: false,
-								isAnonymous: true,
-								name: STATIC_NAME,
-								createdAt: new Date(),
-								updatedAt: new Date(),
-							},
-							ctx,
-						)
-						if (!newUser) {
-							throw ctx.error("INTERNAL_SERVER_ERROR", {
-								message: ERROR_CODES.FAILED_TO_CREATE_USER,
-							})
+						try {
+							const newUser = await ctx.context.internalAdapter.createUser(
+								{
+									email: STATIC_EMAIL,
+									emailVerified: false,
+									isAnonymous: true,
+									name: STATIC_NAME,
+									createdAt: new Date(),
+									updatedAt: new Date(),
+								},
+								ctx,
+							)
+							if (!newUser) {
+								throw ctx.error("INTERNAL_SERVER_ERROR", {
+									message: ERROR_CODES.FAILED_TO_CREATE_USER,
+								})
+							}
+							user = newUser as UserWithAnonymous
+						} catch (error: any) {
+							// If we get a duplicate key error due to concurrent requests
+							if (error.code === "23505") {
+								try {
+									const userResult = await ctx.context.internalAdapter.findUserByEmail(STATIC_EMAIL)
+									user = userResult?.user as UserWithAnonymous | null
+								} catch (findError) {
+									// ignore error
+								}
+							}
+
+							if (!user) {
+								throw ctx.error("INTERNAL_SERVER_ERROR", {
+									message: ERROR_CODES.FAILED_TO_CREATE_USER,
+								})
+							}
 						}
-						user = newUser as UserWithAnonymous
 					}
 
 					// Create session
@@ -140,4 +159,3 @@ export const localAnonymous = (options?: LocalAnonymousOptions) => {
 		$ERROR_CODES: ERROR_CODES,
 	} satisfies BetterAuthPlugin
 }
-

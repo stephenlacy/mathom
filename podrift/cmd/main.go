@@ -70,10 +70,7 @@ type Mathom struct {
 func main() {
 	ctx := context.Background()
 
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatal("Error loading .env file")
-	}
+	_ = godotenv.Load()
 
 	// Initialize database connection
 	db, err := initializeDatabase(ctx)
