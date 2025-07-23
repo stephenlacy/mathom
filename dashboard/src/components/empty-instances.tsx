@@ -4,7 +4,8 @@ import { Button } from "@/components/ui/button"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { Instance } from "@/db/schema"
 import { cn } from "@/lib/utils"
-import { ExternalLinkIcon, Copy } from "lucide-react"
+import { config } from "@/lib/config"
+import { Copy } from "lucide-react"
 import { useState } from "react"
 
 const clientConfig = {
@@ -59,7 +60,7 @@ export function EmptyInstances({
 			)}
 
 			<div className="flex flex-col p-4 gap-4">
-				{typeof window !== "undefined" && window.location.hostname === "localhost" && (
+				{config.isLocal && (
 					<div className="bg-blue-500/10 border border-blue-400/20 p-4 rounded-md">
 						<div className="flex items-center gap-2 mb-2">
 							<div className="w-2 h-2 bg-blue-400 rounded-full"></div>
@@ -144,7 +145,7 @@ export function EmptyInstances({
 				</div>
 				<div className="bg-background p-4 rounded-md text-sm font-mono text-foreground/80 border-1 border-solid border-border/50">
 					<pre className="whitespace-pre-wrap break-words">
-						{typeof window !== "undefined" && window.location.hostname === "localhost"
+						{config.isLocal
 							? `{
   mcpServers: {
     myMCPServer: {

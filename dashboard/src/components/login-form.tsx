@@ -5,9 +5,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { cn } from "@/lib/utils"
+import { config } from "@/lib/config"
 import { GithubIcon } from "lucide-react"
 import Image from "next/image"
 import { useState, useEffect, type FormEvent } from "react"
+import { toast } from "sonner"
 import { useRouter } from "next/navigation"
 
 export function LoginForm({
@@ -21,21 +23,19 @@ export function LoginForm({
 
 	useEffect(() => {
 		const autoSignInLocal = async () => {
-			// Check if we're in local mode by checking the hostname
-			const isLocal = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
-			
-			if (isLocal) {
+			if (config.isLocal) {
 				console.log("Local mode detected, attempting auto-login...")
 				try {
 					setLoading(true)
-					const result = await authClient.signIn.anonymous()
-					console.log("Auto-login successful:", result)
-					
+					await authClient.signIn.anonymous()
+
 					// Redirect to the intended destination or home
 					const redirectUrl = redirectTo && redirectTo.startsWith("/") ? redirectTo : "/"
 					router.push(redirectUrl)
 				} catch (error) {
-					console.error("Auto-login failed:", error)
+					toast.error("Auto-login failed", {
+						description: error instanceof Error ? error.message : "Unknown error occurred",
+					})
 					setLoading(false)
 				}
 			}
@@ -43,11 +43,11 @@ export function LoginForm({
 
 		autoSignInLocal()
 	}, [redirectTo, router])
-	const login = async () => {
+	const emailLogin = async () => {
 		setLoading(true)
 		const { data, error } = await authClient.signIn.magicLink({
 			email,
-			callbackURL: redirectTo && redirectTo.startsWith("/") ? redirectTo : "/", //redirect after successful login (optional)
+			callbackURL: redirectTo && redirectTo.startsWith("/") ? redirectTo : "/",
 		})
 		setLoading(false)
 	}
@@ -64,7 +64,7 @@ export function LoginForm({
 			})
 	}
 
-	if (loading && window.location.hostname === "localhost") {
+	if (loading && config.isLocal) {
 		return (
 			<div className={cn("flex flex-col gap-6 font-mono", className)} {...props}>
 				<Card className="w-full border-accent">
@@ -129,7 +129,7 @@ export function LoginForm({
 							/>
 						</div>
 						<Button
-							onClick={() => login()}
+							onClick={() => emailLogin()}
 							type="submit"
 							className="w-full uppercase"
 							disabled={loading || email.length < 3}

@@ -63,6 +63,17 @@ export const POST = async (req: Request) => {
 		})
 	} catch (e) {
 		console.log(e)
+		
+		// Check if it's an API key error
+		if (e instanceof Error && e.message.includes("Invalid API key")) {
+			return NextResponse.json({ error: "Invalid API key" }, { status: 401 })
+		}
+		
+		// Generic error response
+		return NextResponse.json(
+			{ error: "Internal server error" },
+			{ status: 500 }
+		)
 	}
 }
 

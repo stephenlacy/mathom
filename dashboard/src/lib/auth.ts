@@ -1,11 +1,13 @@
 import { db } from "@/db/drizzle"
 import { betterAuth } from "better-auth"
 import { drizzleAdapter } from "better-auth/adapters/drizzle"
-import { apiKey, bearer, jwt, magicLink, anonymous } from "better-auth/plugins"
+import { apiKey, bearer, jwt, magicLink } from "better-auth/plugins"
+import { localAnonymous } from "./plugins/local-anonymous"
 import * as schema from "@/db/schema"
 import { users } from "@/db/schema/auth"
 import { headers } from "next/headers"
 import { redirect } from "next/navigation"
+import { typeid } from "typeid-js"
 
 const plugins = [
 	apiKey({
@@ -21,7 +23,7 @@ const plugins = [
 			console.log({ email, token, url })
 		},
 	}),
-	...(process.env.MODE === "local" ? [anonymous()] : []),
+	...(process.env.MODE === "local" ? [localAnonymous()] : []),
 ]
 
 export const auth = betterAuth({
@@ -32,8 +34,13 @@ export const auth = betterAuth({
 		},
 	},
 	advanced: {
-		generateId: false,
-		cookiePrefix: "runreal",
+		generateId: ({ model }) => {
+			if (process.env.MODE === "local" && model === "user") {
+				return "user_01k0t0kncff6e9bbwgb26rekqt"
+			}
+			return typeid(model).toString()
+		},
+		cookiePrefix: "mathom",
 	},
 	session: {
 		cookieCache: {

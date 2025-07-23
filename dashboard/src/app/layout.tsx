@@ -4,6 +4,7 @@ import "./globals.css"
 import { ThemeProvider } from "@/components/ui/theme-provider"
 import { QueryProvider } from "@/components/providers/query-provider"
 import { AutoLogin } from "@/components/auto-login"
+import { Toaster } from "@/components/ui/sonner"
 
 const geistSans = Geist({
 	variable: "--font-geist-sans",
@@ -36,6 +37,7 @@ export default function RootLayout({
 					<QueryProvider>
 						<AutoLogin />
 						{children}
+						<Toaster />
 					</QueryProvider>
 				</ThemeProvider>
 			</body>

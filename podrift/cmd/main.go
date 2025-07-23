@@ -22,6 +22,7 @@ import (
 	"github.com/docker/go-connections/nat"
 	"github.com/jackc/pgx/v5/pgxpool"
 	_ "github.com/jackc/pgx/v5/stdlib"
+	"github.com/joho/godotenv"
 	"go.jetify.com/typeid"
 
 	"github.com/stephenlacy/podrift/auth"
@@ -68,6 +69,11 @@ type Mathom struct {
 
 func main() {
 	ctx := context.Background()
+
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatal("Error loading .env file")
+	}
 
 	// Initialize database connection
 	db, err := initializeDatabase(ctx)
