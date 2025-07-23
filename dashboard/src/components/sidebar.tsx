@@ -121,12 +121,12 @@ function UserMenu() {
 	const user = session.user
 
 	// Check if user is anonymous (based on the isAnonymous field or anonymous email pattern)
-	const isAnonymous = user.isAnonymous || !user.email || user.email.includes('@anonymous.')
-	
+	const isAnonymous = user.isAnonymous || !user.email || user.email.includes("@anonymous.")
+
 	// Use "local" for anonymous users, otherwise use actual user data
-	const displayName = isAnonymous ? "local" : (user.name || user.email)
+	const displayName = isAnonymous ? "local" : user.name || user.email
 	const displayEmail = isAnonymous ? "local" : user.email
-	
+
 	const initials = isAnonymous ? "LO" : `${displayEmail.charAt(0)}${displayEmail.charAt(1)}`
 
 	return (

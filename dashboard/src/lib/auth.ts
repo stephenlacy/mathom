@@ -35,8 +35,10 @@ export const auth = betterAuth({
 		},
 	},
 	advanced: {
-		generateId: ({ model }) => {
-			return typeid(model).toString()
+		database: {
+			generateId: ({ model }) => {
+				return typeid(model).toString()
+			},
 		},
 		cookiePrefix: "mathom",
 	},
@@ -53,7 +55,6 @@ export const auth = betterAuth({
 		usePlural: true,
 	}),
 })
-
 
 export async function getUser() {
 	const session = await auth.api.getSession({

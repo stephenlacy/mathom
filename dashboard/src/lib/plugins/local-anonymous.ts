@@ -124,8 +124,8 @@ export const localAnonymous = (options?: LocalAnonymousOptions) => {
 						}
 					}
 
-					// Create session
-					const session = await ctx.context.internalAdapter.createSession(user.id, ctx.request)
+					// Create session using the correct Better Auth API
+					const session = await ctx.context.internalAdapter.createSession(user.id, ctx)
 					if (!session) {
 						return ctx.json(null, {
 							status: 400,

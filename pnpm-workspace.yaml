@@ -1,0 +1,9 @@
+packages:
+  - dashboard
+  - mcx
+
+onlyBuiltDependencies:
+  - '@biomejs/biome'
+  - '@tailwindcss/oxide'
+  - esbuild
+  - sharp

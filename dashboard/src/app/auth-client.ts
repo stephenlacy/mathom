@@ -2,7 +2,7 @@ import { apiKeyClient, magicLinkClient, anonymousClient } from "better-auth/clie
 import { createAuthClient } from "better-auth/react"
 
 const plugins = [
-	magicLinkClient(), 
+	magicLinkClient(),
 	apiKeyClient(),
 	anonymousClient(), // Always include for local development
 ]
