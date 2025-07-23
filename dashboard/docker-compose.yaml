@@ -4,14 +4,13 @@ services:
     build: 
       dockerfile: ./Dashboard.Dockerfile
     command: sh -c 'pnpm run db:migrate && pnpm dev'
-    ports:
-      - '5050:5050'
+    network_mode: host
     environment:
       - BETTER_AUTH_SECRET=TvHZtJnnzEXbFhyq3IZeD5WUyBWowqwy
-      - BETTER_AUTH_URL=http://dashboard:5050
-      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/main
+      - BETTER_AUTH_URL=http://localhost:5050
+      - DATABASE_URL=postgresql://postgres:postgres@localhost:54320/main
       - MATHOM_RUNTIME=docker
-      - MATHOM_RUNTIME_URL=http://runtime:9090
+      - MATHOM_RUNTIME_URL=http://localhost:9090
       - NEXT_PUBLIC_MATHOM_RUNTIME_URL=http://localhost:9090
       - HOSTNAME=0.0.0.0
       - MODE=local
@@ -30,11 +29,10 @@ services:
     build:
       context: ../podrift
       dockerfile: Dockerfile
-    ports:
-      - '9090:9090'
+    network_mode: host
     environment:
-      - LOG_URL=http://dashboard:5050/api/v1/instances
-      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/main
+      - LOG_URL=http://localhost:5050/api/v1/instances
+      - DATABASE_URL=postgresql://postgres:postgres@localhost:54320/main
     depends_on:
       postgres:
         condition: service_healthy

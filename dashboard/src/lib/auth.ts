@@ -48,6 +48,10 @@ export const auth = betterAuth({
 			maxAge: 30 * 60, // in seconds
 		},
 	},
+	rateLimit: {
+		enabled: false,
+	},
+	trustedOrigins: ["http://localhost:5050", "http://dashboard:5050"],
 	plugins,
 	database: drizzleAdapter(db, {
 		provider: "pg",
