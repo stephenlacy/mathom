@@ -79,6 +79,9 @@ export function ActivityChart({ mcpCalls }: ActivityChartProps) {
 
 	const { successData, errorData, bucketSize } = prepareActivityData()
 
+	// Check if there are any errors
+	const hasErrors = errorData.some((point) => point.value > 0)
+
 	return (
 		<div className="flex w-full flex-1 flex-col border-1 border-accent bg-accent/50 rounded-sm p-4">
 			<div className="flex items-center justify-between border-b border-b-accent mb-2 pb-2">
@@ -126,24 +129,26 @@ export function ActivityChart({ mcpCalls }: ActivityChartProps) {
 								.join(" ")}
 						/>
 
-						{/* Error line */}
-						<polyline
-							fill="none"
-							stroke="#f87171"
-							strokeWidth="2"
-							points={errorData
-								.map((point, index) => {
-									const x = (index / (errorData.length - 1)) * 380 + 10
-									const maxValue = Math.max(
-										...successData.map((d) => d.value),
-										...errorData.map((d) => d.value),
-										1,
-									)
-									const y = 90 - (point.value / maxValue) * 70
-									return `${x},${y}`
-								})
-								.join(" ")}
-						/>
+						{/* Error line - only show if there are errors */}
+						{hasErrors && (
+							<polyline
+								fill="none"
+								stroke="#f87171"
+								strokeWidth="2"
+								points={errorData
+									.map((point, index) => {
+										const x = (index / (errorData.length - 1)) * 380 + 10
+										const maxValue = Math.max(
+											...successData.map((d) => d.value),
+											...errorData.map((d) => d.value),
+											1,
+										)
+										const y = 90 - (point.value / maxValue) * 70
+										return `${x},${y}`
+									})
+									.join(" ")}
+							/>
+						)}
 
 						{/* Invisible hover areas */}
 						{successData.map((point, index) => {
@@ -202,26 +207,28 @@ export function ActivityChart({ mcpCalls }: ActivityChartProps) {
 							)
 						})}
 
-						{/* Error dots */}
-						{errorData.map((point, index) => {
-							const x = (index / (errorData.length - 1)) * 380 + 10
-							const maxValue = Math.max(
-								...successData.map((d) => d.value),
-								...errorData.map((d) => d.value),
-								1,
-							)
-							const y = 90 - (point.value / maxValue) * 70
-							return (
-								<circle
-									key={`error-${index}`}
-									cx={x}
-									cy={y}
-									r="3"
-									fill="#f87171"
-									style={{ pointerEvents: "none" }}
-								/>
-							)
-						})}
+						{/* Error dots - only show if there are errors */}
+						{hasErrors &&
+							errorData.map((point, index) => {
+								if (point.value === 0) return null
+								const x = (index / (errorData.length - 1)) * 380 + 10
+								const maxValue = Math.max(
+									...successData.map((d) => d.value),
+									...errorData.map((d) => d.value),
+									1,
+								)
+								const y = 90 - (point.value / maxValue) * 70
+								return (
+									<circle
+										key={`error-${index}`}
+										cx={x}
+										cy={y}
+										r="3"
+										fill="#f87171"
+										style={{ pointerEvents: "none" }}
+									/>
+								)
+							})}
 					</svg>
 
 					{/* Tooltip */}
@@ -256,10 +263,12 @@ export function ActivityChart({ mcpCalls }: ActivityChartProps) {
 							<div className="w-2 h-2 rounded-full bg-green-400"></div>
 							<span className="text-foreground/70">Success</span>
 						</div>
-						<div className="flex items-center gap-1">
-							<div className="w-2 h-2 rounded-full bg-red-400"></div>
-							<span className="text-foreground/70">Error</span>
-						</div>
+						{hasErrors && (
+							<div className="flex items-center gap-1">
+								<div className="w-2 h-2 rounded-full bg-red-400"></div>
+								<span className="text-foreground/70">Error</span>
+							</div>
+						)}
 					</div>
 				</div>
 			) : (

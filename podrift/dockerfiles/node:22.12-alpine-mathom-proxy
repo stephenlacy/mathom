@@ -8,5 +8,4 @@ RUN source $HOME/.cargo/env
 
 ENV PATH="/root/.cargo/bin:$PATH"
 
-# RUN cargo install rmcp-proxy
 RUN cargo install --git https://github.com/stephenlacy/mathom-proxy#c2d2df8ac094bc25988701b3a18637a9e64447c7

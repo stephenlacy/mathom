@@ -1,13 +1,11 @@
 {
   "name": "mcx",
-  "author": "",
-  "description": "Stricli command line application",
+  "author": "Stephen Lacy",
+  "description": "MCP server runner",
   "license": "MIT",
   "type": "module",
-  "version": "0.0.0",
-  "files": [
-    "dist"
-  ],
+  "version": "0.1.0",
+  "files": ["dist"],
   "bin": {
     "mcx": "dist/cli.js",
     "__mcx_bash_complete": "dist/bash-complete.js"
@@ -23,13 +21,8 @@
     "prepublishOnly": "pnpm run build"
   },
   "tsup": {
-    "entry": [
-      "src/bin/cli.ts",
-      "src/bin/bash-complete.ts"
-    ],
-    "format": [
-      "esm"
-    ],
+    "entry": ["src/bin/cli.ts", "src/bin/bash-complete.ts"],
+    "format": ["esm"],
     "tsconfig": "src/tsconfig.json",
     "clean": true,
     "splitting": true,

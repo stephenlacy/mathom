@@ -11,7 +11,7 @@ const DEFAULT_API_URL = "http://localhost:5050/api/v1"
 // @ts-ignore
 const homeDir = process.env.HOME || process.env.USERPROFILE
 const configDir = path.join(homeDir || "~", ".config")
-const configFile = path.join(configDir, "recall", "config.json")
+const configFile = path.join(configDir, "mathom", "config.json")
 
 const get = () => {
 	let config: Config = {}

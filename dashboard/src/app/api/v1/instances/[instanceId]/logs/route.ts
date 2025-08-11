@@ -1,5 +1,5 @@
 import { db } from "@/db/drizzle"
-import { instances, instanceLogs } from "@/db/schema"
+import { instances, instanceLogs, apiKeys } from "@/db/schema"
 import { auth } from "@/lib/auth"
 import { and, eq, desc, or } from "drizzle-orm"
 import { headers } from "next/headers"
@@ -40,23 +40,16 @@ export const POST = async (
 	// Check for API key authentication first
 	const apiKeyHeader = headersList.get("authorization")?.replace("Bearer ", "")
 	if (apiKeyHeader) {
-		const apiKeyResult = await auth.api.verifyApiKey({
-			body: {
-				key: apiKeyHeader,
-				permissions: {
-					logs: ["create"],
-				},
-			},
+		// Directly query the API key from database to avoid rate limiting
+		const apiKey = await db.query.apiKeys.findFirst({
+			where: eq(apiKeys.key, apiKeyHeader),
 		})
 
-		if (!apiKeyResult.valid || !apiKeyResult.key) {
-			return NextResponse.json(
-				{ error: "Invalid API key or insufficient permissions" },
-				{ status: 401 },
-			)
+		if (!apiKey || (apiKey.expiresAt && new Date(apiKey.expiresAt) < new Date())) {
+			return NextResponse.json({ error: "Invalid API key or expired" }, { status: 401 })
 		}
 
-		const userId = apiKeyResult.key.userId
+		const userId = apiKey.userId
 		const { instanceId } = await params
 
 		const instance = await db.query.instances.findFirst({

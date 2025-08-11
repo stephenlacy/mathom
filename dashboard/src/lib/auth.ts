@@ -5,7 +5,6 @@ import { apiKey, bearer, jwt, magicLink } from "better-auth/plugins"
 import { localAnonymous } from "./plugins/local-anonymous"
 import { config } from "./config"
 import * as schema from "@/db/schema"
-import { users } from "@/db/schema/auth"
 import { headers } from "next/headers"
 import { redirect } from "next/navigation"
 import { typeid } from "typeid-js"
@@ -16,6 +15,9 @@ const plugins = [
 			defaultPermissions: {
 				logs: ["read"],
 			},
+		},
+		rateLimit: {
+			enabled: false,
 		},
 	}),
 	bearer(),

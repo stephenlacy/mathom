@@ -39,7 +39,7 @@ importers:
         specifier: ^5.83.0
         version: 5.83.0(@tanstack/react-query@5.83.0(react@19.1.0))(react@19.1.0)
       better-auth:
-        specifier: ^1.3.3
+        specifier: 1.3.3
         version: 1.3.3(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
       class-variance-authority:
         specifier: ^0.7.1
@@ -50,9 +50,12 @@ importers:
       dotenv:
         specifier: ^16.6.1
         version: 16.6.1
+      drizzle-kit:
+        specifier: ^0.30.6
+        version: 0.30.6
       drizzle-orm:
         specifier: ^0.41.0
-        version: 0.41.0(@neondatabase/serverless@1.0.1)(@types/pg@8.15.4)(gel@2.1.1)(kysely@0.28.3)(postgres@3.4.7)
+        version: 0.41.0(@neondatabase/serverless@1.0.1)(@types/pg@8.15.4)(gel@2.1.1)(kysely@0.28.5)(postgres@3.4.7)
       lucide-react:
         specifier: ^0.487.0
         version: 0.487.0(react@19.1.0)
@@ -84,8 +87,8 @@ importers:
         specifier: ^1.2.0
         version: 1.2.0
       zod:
-        specifier: 4.0.0-beta.20250411T195319
-        version: 4.0.0-beta.20250411T195319
+        specifier: 4.0.17
+        version: 4.0.17
     devDependencies:
       '@biomejs/biome':
         specifier: ^1.9.4
@@ -105,9 +108,6 @@ importers:
       '@types/react-dom':
         specifier: ^19.1.6
         version: 19.1.6(@types/react@19.1.8)
-      drizzle-kit:
-        specifier: ^0.30.6
-        version: 0.30.6
       tailwindcss:
         specifier: ^4.1.11
         version: 4.1.11
@@ -1393,9 +1393,6 @@ packages:
   '@types/react@19.1.8':
     resolution: {integrity: sha512-AwAfQ2Wa5bCx9WP8nZL2uMZWod7J7/JSplxbTmBQ5ms6QpqNYm672H0Vu9ZVKVngQ+ii4R/byguVEUZQyeg44g==}
 
-  '@zod/core@0.4.0':
-    resolution: {integrity: sha512-c/ct67Ae1cTqgwT1ihJPaoV48fxa6ie2a9CKIgQ5EFngeskwcCinSg3jCJWXVePIVCLfvHSgcH0dUannz4o0MQ==}
-
   accepts@2.0.0:
     resolution: {integrity: sha512-5cvg6CtKwfgdmVqY1WIiXKc3Q1bkRqGLi+2W/6ao+6Y7gu/RCwRuAhGEzh5B4KlszSuTLgZYuqFqo5bImjNKng==}
     engines: {node: '>= 0.6'}
@@ -1452,8 +1449,8 @@ packages:
       react-dom:
         optional: true
 
-  better-call@1.0.12:
-    resolution: {integrity: sha512-ssq5OfB9Ungv2M1WVrRnMBomB0qz1VKuhkY2WxjHaLtlsHoSe9EPolj1xf7xf8LY9o3vfk3Rx6rCWI4oVHeBRg==}
+  better-call@1.0.13:
+    resolution: {integrity: sha512-auqdP9lnNOli9tKpZIiv0nEIwmmyaD/RotM3Mucql+Ef88etoZi/t7Ph5LjlmZt/hiSahhNTt6YVnx6++rziXA==}
 
   binary-extensions@2.3.0:
     resolution: {integrity: sha512-Ceh+7ox5qe7LJuLHoY0feh3pHuUDHAcRUeyL2VYghZwfpkNIy/+8Ocg0a3UuSoYzavmylwuLWQOf3hl0jjMMIw==}
@@ -1947,8 +1944,8 @@ packages:
   json-schema-traverse@0.4.1:
     resolution: {integrity: sha512-xbbCH5dCYU5T8LcEhhuh7HJ88HXuW3qsI3Y0zOZFKfZEHcpWiHU/Jxzk629Brsab/mMiHQti9wMP+845RPe3Vg==}
 
-  kysely@0.28.3:
-    resolution: {integrity: sha512-svKnkSH72APRdjfVCCOknxaC9Eb3nA2StHG9d5/sKOqRvHRp2Dtf1XwDvc92b4B5v6LV+EAGWXQbZ5jMOvHaDw==}
+  kysely@0.28.5:
+    resolution: {integrity: sha512-rlB0I/c6FBDWPcQoDtkxi9zIvpmnV5xoIalfCMSMCa7nuA6VGA3F54TW9mEgX4DVf10sXAWCF5fDbamI/5ZpKA==}
     engines: {node: '>=20.0.0'}
 
   lightningcss-darwin-arm64@1.30.1:
@@ -2674,11 +2671,8 @@ packages:
   zod@3.25.76:
     resolution: {integrity: sha512-gzUt/qt81nXsFGKIFcC3YnfEAx5NkunCfnDlvuBSSFS02bcXu4Lmea0AFIUwbLWxWPx3d9p8S5QoaujKcNQxcQ==}
 
-  zod@4.0.0-beta.20250411T195319:
-    resolution: {integrity: sha512-dlzy+dWxZwCr4bc1mJLW5wPH04cSg7cRVrL6T5PrdHJRIkDXNyhIZFAJdMs7OcjQ5OFJFvuIwNnMishzMQBX+w==}
-
-  zod@4.0.5:
-    resolution: {integrity: sha512-/5UuuRPStvHXu7RS+gmvRf4NXrNxpSllGwDnCBcJZtQsKrviYXm54yDGV2KYNLT5kq0lHGcl7lqWJLgSaG+tgA==}
+  zod@4.0.17:
+    resolution: {integrity: sha512-1PHjlYRevNxxdy2JZ8JcNAw7rX8V9P1AKkP+x/xZfxB0K5FYfuV+Ug6P/6NVSR2jHQ+FzDDoDHS04nYUsOIyLQ==}
 
 snapshots:
 
@@ -3651,8 +3645,6 @@ snapshots:
     dependencies:
       csstype: 3.1.3
 
-  '@zod/core@0.4.0': {}
-
   accepts@2.0.0:
     dependencies:
       mime-types: 3.0.1
@@ -3704,17 +3696,17 @@ snapshots:
       '@noble/hashes': 1.8.0
       '@simplewebauthn/browser': 13.1.2
       '@simplewebauthn/server': 13.1.2
-      better-call: 1.0.12
+      better-call: 1.0.13
       defu: 6.1.4
       jose: 5.10.0
-      kysely: 0.28.3
+      kysely: 0.28.5
       nanostores: 0.11.4
-      zod: 4.0.5
+      zod: 4.0.17
     optionalDependencies:
       react: 19.1.0
       react-dom: 19.1.0(react@19.1.0)
 
-  better-call@1.0.12:
+  better-call@1.0.13:
     dependencies:
       '@better-fetch/fetch': 1.1.18
       rou3: 0.5.1
@@ -3865,12 +3857,12 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  drizzle-orm@0.41.0(@neondatabase/serverless@1.0.1)(@types/pg@8.15.4)(gel@2.1.1)(kysely@0.28.3)(postgres@3.4.7):
+  drizzle-orm@0.41.0(@neondatabase/serverless@1.0.1)(@types/pg@8.15.4)(gel@2.1.1)(kysely@0.28.5)(postgres@3.4.7):
     optionalDependencies:
       '@neondatabase/serverless': 1.0.1
       '@types/pg': 8.15.4
       gel: 2.1.1
-      kysely: 0.28.3
+      kysely: 0.28.5
       postgres: 3.4.7
 
   dunder-proto@1.0.1:
@@ -4218,7 +4210,7 @@ snapshots:
 
   json-schema-traverse@0.4.1: {}
 
-  kysely@0.28.3: {}
+  kysely@0.28.5: {}
 
   lightningcss-darwin-arm64@1.30.1:
     optional: true
@@ -4872,8 +4864,4 @@ snapshots:
 
   zod@3.25.76: {}
 
-  zod@4.0.0-beta.20250411T195319:
-    dependencies:
-      '@zod/core': 0.4.0
-
-  zod@4.0.5: {}
+  zod@4.0.17: {}

@@ -2,11 +2,12 @@ services:
 
   dashboard:
     build: 
+      context: ./dashboard
       dockerfile: ./Dashboard.Dockerfile
     command: sh -c 'pnpm run db:migrate && pnpm dev'
     network_mode: host
     environment:
-      - BETTER_AUTH_SECRET=TvHZtJnnzEXbFhyq3IZeD5WUyBWowqwy
+      - BETTER_AUTH_SECRET=changeme
       - BETTER_AUTH_URL=http://localhost:5050
       - DATABASE_URL=postgresql://postgres:postgres@localhost:54320/main
       - MATHOM_RUNTIME=docker
@@ -17,7 +18,7 @@ services:
       - NEXT_PUBLIC_MODE=local
       - PORT=5050
     volumes:
-      - .:/app
+      - ./dashboard:/app
       - /app/node_modules
       - /app/.next
     depends_on:
@@ -27,11 +28,11 @@ services:
 
   runtime:
     build:
-      context: ../podrift
+      context: ./podrift
       dockerfile: Dockerfile
     network_mode: host
     environment:
-      - LOG_URL=http://localhost:5050/api/v1/instances
+      - LOG_URL=http://host.docker.internal:5050/api/v1/instances
       - DATABASE_URL=postgresql://postgres:postgres@localhost:54320/main
     depends_on:
       postgres:

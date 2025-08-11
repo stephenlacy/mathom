@@ -513,13 +513,28 @@ func (m *Mathom) startContainer(item *pkg.Container) error {
 			image = item.Checkpoint
 			item.Checkpoint = ""
 		}
+
+		_, err := m.containerRuntime.ImageInspect(ctx, image)
+		if err != nil {
+			// If image doesn't exist, panic instead of trying to pull
+			if client.IsErrNotFound(err) {
+				panic(fmt.Sprintf("Docker image '%s' not found locally. Please build the image first.", image))
+			}
+			return fmt.Errorf("failed to inspect image: %w", err)
+		}
+
 		args := append([]string{item.Cmd}, item.Args...)
 		args = append(args, item.Name)
+
+		// Build launch arguments with log URL
+		logURL := os.Getenv("LOG_URL") + "/" + item.TypeID + "/logs"
+		launchArgs := append([]string{"--log-url", logURL}, LaunchArgs...)
+
 		con, err := m.containerRuntime.ContainerCreate(ctx, &container.Config{
 			Image:      image,
 			Entrypoint: []string{LaunchCommand},
-			Cmd:        append(LaunchArgs, args...),
-			Env:        []string{"MATHOM_ACCESS_TOKEN=" + item.ApiKey, "LOG_URL=" + os.Getenv("LOG_URL") + "/" + item.TypeID + "/logs"},
+			Cmd:        append(launchArgs, args...),
+			Env:        []string{"MATHOM_ACCESS_TOKEN=" + item.ApiKey, "LOG_URL=" + logURL, "LOG_AUTH_HEADER=Bearer " + item.ApiKey},
 			ExposedPorts: nat.PortSet{
 				nat.Port("80/tcp"): struct{}{},
 			},
