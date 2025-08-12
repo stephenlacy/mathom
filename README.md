@@ -31,6 +31,8 @@ docker compose up -d
 
 This will start the dashboard on [localhost:5050](http://localhost:5050) with auth disabled in local mode.
 
+![screnshot2](./assets/screenshot2.jpg)
+
 ### Authenticate
 
 ```bash
