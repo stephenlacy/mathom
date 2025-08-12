@@ -1,7 +1,7 @@
 # mathom
 > Local-first MCP platform with OAuth2 for running and monitoring your servers.
 
-![hero](./assets/dashboard.png)
+![hero](./assets/hero.jpg)
 
 ### Install mcx CLI
 
