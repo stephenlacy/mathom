@@ -78,6 +78,12 @@ Using the inspector:
 npx @modelcontextprotocol/inspector@0.15.0 mcx @modelcontextprotocol/server-everything
 ```
 
+
+## Theming
+
+Light/Dark mode is supported
+![theme-hero](./assets/theme-hero.png)
+
 ## Development
 
 ### Running in Development Mode
