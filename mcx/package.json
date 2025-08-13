@@ -4,8 +4,8 @@
   "description": "MCP server runner",
   "license": "MIT",
   "type": "module",
-  "version": "0.2.0",
-  "files": ["dist"],
+  "version": "0.2.1",
+  "files": ["dist", "README.md", "LICENSE", "src"],
   "bin": {
     "mcx": "dist/cli.js",
     "__mcx_bash_complete": "dist/bash-complete.js"
