@@ -13,8 +13,12 @@ npm i -g mcx
 
 ### Prerequisites
 
-- Docker and Docker Compose
-OR:
+- Docker 
+- Docker Compose
+
+Or, if running in development mode:
+- Docker (for servers)
+- Go
 - Node.js and pnpm
 - PostgreSQL
 
@@ -110,6 +114,10 @@ DATABASE_URL=postgresql://postgres:postgres@localhost:54320/main
 LOG_URL=http://host.docker.internal:5050/api/v1/instances
 MATHOM_RUNTIME=docker
 ```
+
+## Contributing
+
+Contributions are welcome!
 
 ## License
 
