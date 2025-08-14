@@ -40,6 +40,7 @@ import {
 } from "@/components/ui/sidebar"
 
 import Link from "next/link"
+import Image from "next/image"
 
 import { usePathname } from "next/navigation"
 import { signOut, useSession } from "@/app/auth-client"
@@ -68,11 +69,14 @@ export function Sidebar() {
 	const pathname = usePathname()
 	return (
 		<SidebarProvider className="flex flex-col h-full w-[256px] border-r-1 border-r-accent bg-accent/20 fixed">
-			<div className="flex p-5 justify-between items-center uppercase">
-				<div>default</div>
-				<div>
-					<ChevronDownIcon />
+			<div className="flex p-5 justify-between items-center">
+				<div className="flex items-center gap-3">
+					<Image src="/logo.png" alt="mathom" width={32} height={32} className="rounded-md" />
+					<span className="font-semibold text-lg">mathom</span>
 				</div>
+				{/* <div>
+					<ChevronDownIcon />
+				</div> */}
 			</div>
 
 			{links.map((link) => {
