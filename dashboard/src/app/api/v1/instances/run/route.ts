@@ -11,7 +11,7 @@ const MATHOM_RUNTIME = process.env.MATHOM_RUNTIME
 const MATHOM_RUNTIME_URL = process.env.MATHOM_RUNTIME_URL!
 const DOCKER_IMAGES = {
 	generic: "",
-	node: "mathom-node:22.12-alpine-mathom-proxy",
+	node: process.env.NODE_DOCKER_IMAGE || "ghcr.io/stephenlacy/mathom/mathom-proxy:main",
 }
 
 const RequestInput = z.object({

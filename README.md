@@ -133,9 +133,10 @@ Or use the [quickstart script](./quickstart.sh)
 **Environment Setup**
 ```bash
 # .env file
-BETTER_AUTH_URL=http://localhost:5050
-DATABASE_URL=postgresql://...
-LOG_URL=http://...
+BETTER_AUTH_URL=http://localhost:5050 # required
+DATABASE_URL=postgresql://... # required
+LOG_URL=http://... # required
+NODE_DOCKER_IMAGE="you-custom-node-image" # optional
 ```
 
 ### Development
