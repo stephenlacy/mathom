@@ -52,7 +52,9 @@ export const api = (cfg: Config) => {
 			name,
 			cmd,
 			args,
-		}: { name: string; cmd?: string; args: string[] }): Promise<
+			image,
+			env,
+		}: { name: string; cmd?: string; args: string[]; image?: string; env?: Record<string, string> }): Promise<
 			ApiResponses["instances"]["run"]
 		> => {
 			return request<ApiResponses["instances"]["run"]>({
@@ -64,6 +66,8 @@ export const api = (cfg: Config) => {
 					name,
 					cmd,
 					args,
+					image,
+					env,
 				},
 			})
 		},

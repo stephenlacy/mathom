@@ -24,6 +24,7 @@ type Container struct {
 	Name            string
 	Cmd             string
 	Args            []string
+	Env             map[string]string
 	Checkpoint      string
 	Auth            bool // enable auth
 	Visibility      bool // public/private

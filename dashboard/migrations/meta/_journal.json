@@ -78,6 +78,13 @@
       "when": 1752041455138,
       "tag": "0010_odd_golden_guardian",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1755240545128,
+      "tag": "0011_material_starhawk",
+      "breakpoints": true
     }
   ]
 }

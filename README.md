@@ -88,6 +88,13 @@ mcx @modelcontextprotocol/server-filesystem
 mcx my-server -- --custom-arg value
 ```
 
+### Custom docker servers
+STDIO servers in Docker images can be run using the `--docker` flag, they will get wrapped automatically with the mathom-proxy:
+
+```bash
+mcx --docker mcp/github-mcp-server -e GITHUB_PERSONAL_ACCESS_TOKEN='ghp_token'
+```
+
 ### Claude/Cursor
 - Claude: `~/Library/Application Support/Claude/claude_desktop_config.json`
 - Cursor: `~/.cursor/mcp.json`
@@ -101,6 +108,10 @@ mcx my-server -- --custom-arg value
       "env": {
         "MATHOM_URL": "http://localhost:5050"
       }
+    },
+    "myDockerServer": {
+      "command": "mcx",
+      "args": ["--docker", "mcp/github-mcp-server", "-e", "GITHUB_PERSONAL_ACCESS_TOKEN=ghp_token"],
     }
   }
 }

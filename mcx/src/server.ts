@@ -9,18 +9,20 @@ export async function server(cfg: Config, opts: ApiResponses["instances"]["run"]
 	if (cfg.accessToken) {
 		headers["X-Api-Key"] = cfg.accessToken
 	}
-	const waitForAuthCode = () => Promise.resolve("")
-	const authInitializer = () =>
-		Promise.resolve({
+
+	const waitForAuthCode = () => {
+		return Promise.resolve("")
+	}
+	const authInitializer = () => {
+		return Promise.resolve({
 			waitForAuthCode,
 			skipBrowserAuth: true,
 		})
+	}
 	const authProvider = undefined
 
 	try {
-		log(`Connecting to MCP endpoint: ${opts.uri}`)
-		
-		// Connect to remote server with authentication (using null client like original)  
+		// Connect to remote server with authentication (using null client like original)
 		// Use http-only to force StreamableHTTP transport which properly handles HTTP+streamable
 		const remoteTransport = await connectToRemoteServer(
 			null,
@@ -47,7 +49,6 @@ export async function server(cfg: Config, opts: ApiResponses["instances"]["run"]
 		const cleanup = async () => {
 			await remoteTransport.close()
 			await localTransport.close()
-			// server.close()
 		}
 		setupSignalHandlers(cleanup)
 	} catch (error) {

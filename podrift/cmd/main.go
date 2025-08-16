@@ -1,10 +1,15 @@
 package main
 
 import (
+	"archive/tar"
+	"bytes"
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"log"
 	"math/rand"
 	"net/http"
@@ -12,12 +17,15 @@ import (
 	"os"
 	"runtime"
 	"slices"
+	"sort"
 	"strings"
 	"sync"
 	"time"
 
+	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/checkpoint"
 	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/api/types/image"
 	"github.com/docker/docker/client"
 	"github.com/docker/go-connections/nat"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -37,8 +45,8 @@ const (
 	ContainerPort = "80"
 	TickInterval  = 3 * time.Second
 
-	// Request timeout
-	ClientTimeout = 2 * time.Second
+	// Request timeout for health checks
+	ClientTimeout = 5 * time.Second
 
 	// Container configuration
 	LaunchCommand = "mcp-proxy"
@@ -238,28 +246,32 @@ func (m *Mathom) directHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var item *pkg.Container
+	// always fetch fresh data from database to get latest env values
+	item := &pkg.Container{}
+	err = m.db.QueryRow(r.Context(), "SELECT id, user_id, api_key, runtime, name, cmd, args, env FROM instances WHERE id = $1", id.UUID()).Scan(&item.ID, &item.UserID, &item.ApiKey, &item.Image, &item.Name, &item.Cmd, &item.Args, &item.Env)
+	if err != nil {
+		fmt.Println("QueryRow 235", err)
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+	item.Domain = "-"
+	item.HostPort = 9090 // Default port from ADDR
 
-	if exists == -1 {
-		// Temporarily create container item to check OAuth vs API key auth
-		tempItem := &pkg.Container{}
-		err := m.db.QueryRow(r.Context(), "SELECT id, user_id, api_key, runtime, name, cmd, args FROM instances WHERE id = $1", id.UUID()).Scan(&tempItem.ID, &tempItem.UserID, &tempItem.ApiKey, &tempItem.Image, &tempItem.Name, &tempItem.Cmd, &tempItem.Args)
-		if err != nil {
-			fmt.Println("QueryRow 235", err)
-			w.WriteHeader(http.StatusNotFound)
-			return
-		}
-		// Set required fields for HandleAuth
-		tempItem.Domain = "-"
-		tempItem.HostPort = 9090 // Default port from ADDR
-		item = tempItem
-	} else {
+	if exists != -1 {
 		m.mutex.RLock()
-		item = m.containers[exists]
+		oldItem := m.containers[exists]
+		item.ContainerID = oldItem.ContainerID
+		item.Host = oldItem.Host
+		item.StartedAt = oldItem.StartedAt
+		item.StoppedAt = oldItem.StoppedAt
+		item.StartAttempts = oldItem.StartAttempts
+		item.ConnectionCount = oldItem.ConnectionCount
+		item.LastReqAt = oldItem.LastReqAt
+		item.Checkpoint = oldItem.Checkpoint
+		item.TypeID = oldItem.TypeID
 		m.mutex.RUnlock()
 	}
 
-	// First check for OAuth requests using HandleAuth
 	handled, err := auth.HandleAuth(m.db, m.oauthClients, item, w, r)
 	if err != nil {
 		w.Header().Set("Content-Type", "application/json")
@@ -284,6 +296,11 @@ func (m *Mathom) directHandler(w http.ResponseWriter, r *http.Request) {
 		item.Domain = "-"
 		m.mutex.Lock()
 		m.containers = append(m.containers, item)
+		m.mutex.Unlock()
+	} else {
+		// Update existing container
+		m.mutex.Lock()
+		m.containers[exists] = item
 		m.mutex.Unlock()
 	}
 
@@ -329,34 +346,45 @@ func (m *Mathom) runHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	item := &pkg.Container{}
+
+	err = m.db.QueryRow(r.Context(), "SELECT id, user_id, api_key, runtime, name, cmd, args, env FROM instances WHERE id = $1 AND user_id = $2", id.UUID(), userID).Scan(&item.ID, &item.UserID, &item.ApiKey, &item.Image, &item.Name, &item.Cmd, &item.Args, &item.Env)
+	if err != nil {
+		fmt.Println(err)
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+
+	typeID, err := typeid.FromUUIDWithPrefix("instance", item.ID)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	item.TypeID = typeID.String()
+	item.Domain = "-"
+
 	if exists == -1 {
-		err := m.db.QueryRow(r.Context(), "SELECT id, user_id, api_key, runtime, name, cmd, args FROM instances WHERE id = $1 AND user_id = $2", id.UUID(), userID).Scan(&item.ID, &item.UserID, &item.ApiKey, &item.Image, &item.Name, &item.Cmd, &item.Args)
-		if err != nil {
-			fmt.Println(err)
-			w.WriteHeader(http.StatusNotFound)
-			return
-		}
-
-		typeID, err := typeid.FromUUIDWithPrefix("instance", item.ID)
-		if err != nil {
-			fmt.Println("error generating typeID: ", err)
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-		item.TypeID = typeID.String()
-
-		item.Domain = "-"
 		m.mutex.Lock()
 		m.containers = append(m.containers, item)
 		m.mutex.Unlock()
 	} else {
-		m.mutex.RLock()
-		item = m.containers[exists]
-		m.mutex.RUnlock()
+		m.mutex.Lock()
+		oldItem := m.containers[exists]
+		item.ContainerID = oldItem.ContainerID
+		item.Host = oldItem.Host
+		item.HostPort = oldItem.HostPort
+		item.StartedAt = oldItem.StartedAt
+		item.StoppedAt = oldItem.StoppedAt
+		item.StartAttempts = oldItem.StartAttempts
+		item.ConnectionCount = oldItem.ConnectionCount
+		item.LastReqAt = oldItem.LastReqAt
+		item.Checkpoint = oldItem.Checkpoint
+		// Replace with updated item
+		m.containers[exists] = item
+		m.mutex.Unlock()
 	}
 
 	url := "http://" + r.Host + "/mcp/" + item.TypeID
-	json.NewEncoder(w).Encode(map[string]string{"url": url})
+	json.NewEncoder(w).Encode(map[string]string{"url": url, "uri": url, "id": item.TypeID})
 }
 
 func (m *Mathom) subdomainHandler(w http.ResponseWriter, r *http.Request) {
@@ -370,7 +398,7 @@ func (m *Mathom) subdomainHandler(w http.ResponseWriter, r *http.Request) {
 	if exists == -1 {
 		slug := strings.Split(domain, ".")[0]
 
-		err := m.db.QueryRow(r.Context(), "SELECT id, user_id, api_key, runtime, name, cmd, args FROM instances WHERE slug = $1", slug).Scan(&item.ID, &item.UserID, &item.ApiKey, &item.Image, &item.Name, &item.Cmd, &item.Args)
+		err := m.db.QueryRow(r.Context(), "SELECT id, user_id, api_key, runtime, name, cmd, args, env FROM instances WHERE slug = $1", slug).Scan(&item.ID, &item.UserID, &item.ApiKey, &item.Image, &item.Name, &item.Cmd, &item.Args, &item.Env)
 		if err != nil {
 			fmt.Println("QueryRow 350", err)
 			w.WriteHeader(http.StatusNotFound)
@@ -476,11 +504,6 @@ func (m *Mathom) proxyContainer(item *pkg.Container, w http.ResponseWriter, r *h
 	ctx := context.WithValue(r.Context(), KeyRequestContainer, item)
 	r = r.WithContext(ctx)
 	return r
-
-	// forward
-	// r.Header.Set("X-Forwarded-Host", r.Host)
-	// r.URL.Scheme = "http"
-	// r.URL.Host = item.Host
 }
 
 // createReverseProxy creates and configures the reverse proxy
@@ -502,43 +525,228 @@ func (m *Mathom) createReverseProxy() httputil.ReverseProxy {
 	}
 }
 
+// computeContainerConfigHash generates a hash of the container configuration
+// to determine if a container needs to be recreated
+func computeContainerConfigHash(imageName string, cmd []string, entrypoint []string, env []string) string {
+	sortedEnv := make([]string, len(env))
+	copy(sortedEnv, env)
+	sort.Strings(sortedEnv)
+
+	config := struct {
+		Image      string   `json:"image"`
+		Cmd        []string `json:"cmd"`
+		Entrypoint []string `json:"entrypoint"`
+		Env        []string `json:"env"`
+	}{
+		Image:      imageName,
+		Cmd:        cmd,
+		Entrypoint: entrypoint,
+		Env:        sortedEnv,
+	}
+
+	// make a hash to compare the values
+	data, _ := json.Marshal(config)
+	hash := sha256.Sum256(data)
+	return hex.EncodeToString(hash[:])
+}
+
+// buildMcpWrapperImage wraps a Docker image with mcp-proxy
+func (m *Mathom) buildMcpWrapperImage(ctx context.Context, baseImage string) (string, error) {
+	sanitizedName := strings.ReplaceAll(strings.ReplaceAll(baseImage, "/", "-"), ":", "-")
+	wrappedImageName := fmt.Sprintf("mathom-wrapped-%s", sanitizedName)
+
+	if _, err := m.containerRuntime.ImageInspect(ctx, wrappedImageName); err == nil {
+		log.Printf("Reusing existing wrapped image: %s", wrappedImageName)
+		return wrappedImageName, nil
+	}
+
+	// get the command from the base image
+	baseInspect, err := m.containerRuntime.ImageInspect(ctx, baseImage)
+	if err != nil {
+		return "", fmt.Errorf("inspecting base image: %w", err)
+	}
+
+	baseCmd := append(baseInspect.Config.Entrypoint, baseInspect.Config.Cmd...)
+	cmdString := ""
+	if len(baseCmd) > 0 {
+		cmdParts := make([]string, len(baseCmd))
+		for i, part := range baseCmd {
+			escaped := strings.ReplaceAll(part, `'`, `'\''`)
+			cmdParts[i] = fmt.Sprintf(`'%s'`, escaped)
+		}
+		cmdString = fmt.Sprintf(" %s", strings.Join(cmdParts, " "))
+	}
+
+	dockerfileContent := fmt.Sprintf(`ARG BASE_IMAGE=%s
+FROM ${BASE_IMAGE} as base
+FROM ghcr.io/stephenlacy/mathom/mathom-proxy:main as proxy
+FROM base
+COPY --from=proxy /root/.cargo/bin/mcp-proxy /usr/local/bin/mcp-proxy
+RUN chmod +x /usr/local/bin/mcp-proxy && \
+    echo '#!/bin/sh' > /entrypoint.sh && \
+    echo 'exec /usr/local/bin/mcp-proxy --log-url "$LOG_URL" --port 80 --host 0.0.0.0 --%s' >> /entrypoint.sh && \
+    chmod +x /entrypoint.sh
+ENTRYPOINT ["/entrypoint.sh"]
+`, baseImage, cmdString)
+
+	var buf bytes.Buffer
+	tw := tar.NewWriter(&buf)
+
+	// add Dockerfile to tar
+	header := &tar.Header{
+		Name: "Dockerfile",
+		Size: int64(len(dockerfileContent)),
+		Mode: 0644,
+	}
+	if err := tw.WriteHeader(header); err != nil {
+		return "", fmt.Errorf("failed to write tar header: %w", err)
+	}
+	if _, err := tw.Write([]byte(dockerfileContent)); err != nil {
+		return "", fmt.Errorf("failed to write Dockerfile to tar: %w", err)
+	}
+	if err := tw.Close(); err != nil {
+		return "", fmt.Errorf("failed to close tar writer: %w", err)
+	}
+
+	buildOptions := types.ImageBuildOptions{
+		Tags:       []string{wrappedImageName},
+		Dockerfile: "Dockerfile",
+		BuildArgs: map[string]*string{
+			"BASE_IMAGE": &baseImage,
+		},
+	}
+
+	buildResponse, err := m.containerRuntime.ImageBuild(ctx, &buf, buildOptions)
+	if err != nil {
+		return "", fmt.Errorf("building image: %w", err)
+	}
+	defer buildResponse.Body.Close()
+
+	// process build output
+	decoder := json.NewDecoder(buildResponse.Body)
+	for {
+		var msg map[string]any
+		if err := decoder.Decode(&msg); err != nil {
+			if err == io.EOF {
+				break
+			}
+			return "", fmt.Errorf("reading build output: %w", err)
+		}
+		if stream, ok := msg["stream"].(string); ok && stream != "" {
+			log.Printf("Docker build: %s", strings.TrimSpace(stream))
+		}
+		if errorMsg, ok := msg["error"].(string); ok && errorMsg != "" {
+			return "", fmt.Errorf("build error: %s", errorMsg)
+		}
+	}
+
+	log.Printf("Successfully built wrapped image: %s", wrappedImageName)
+	return wrappedImageName, nil
+}
+
 func (m *Mathom) startContainer(item *pkg.Container) error {
-	// start container
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	if item.ContainerID == "" {
-		image := item.Image
+		imageName := item.Image
 		if item.Checkpoint != "" {
-			image = item.Checkpoint
+			imageName = item.Checkpoint
 			item.Checkpoint = ""
 		}
 
-		_, err := m.containerRuntime.ImageInspect(ctx, image)
+		// try to inspect and pull the image if not found
+		_, err := m.containerRuntime.ImageInspect(ctx, imageName)
 		if err != nil {
-			// If image doesn't exist, panic instead of trying to pull
 			if client.IsErrNotFound(err) {
-				panic(fmt.Sprintf("Docker image '%s' not found locally. Please build the image first.", image))
+				log.Printf("Docker image '%s' not found, attempting to pull...", imageName)
+
+				ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+				defer cancel()
+
+				reader, err := m.containerRuntime.ImagePull(ctx, imageName, image.PullOptions{})
+				if err != nil {
+					return fmt.Errorf("pulling image '%s': %w", imageName, err)
+				}
+				defer reader.Close()
+
+				// read the pull output to make sure it completes
+				buf := make([]byte, 8192)
+				for {
+					_, err := reader.Read(buf)
+					if err != nil {
+						// expect io.EOF
+						break
+					}
+				}
+
+				log.Printf("Successfully pulled Docker image '%s'", imageName)
+			} else {
+				return fmt.Errorf("failed to inspect image: %w", err)
 			}
-			return fmt.Errorf("failed to inspect image: %w", err)
 		}
 
-		args := append([]string{item.Cmd}, item.Args...)
-		args = append(args, item.Name)
+		// wrap custom docker images with mcp-proxy
+		isWrappedImage := item.Image != "" && !strings.Contains(item.Image, "mathom")
+		if isWrappedImage {
+			log.Printf("Building wrapped MCP image for: %s", imageName)
+			buildCtx, buildCancel := context.WithTimeout(context.Background(), 5*time.Minute)
+			defer buildCancel()
+			wrappedImage, err := m.buildMcpWrapperImage(buildCtx, imageName)
+			if err != nil {
+				return fmt.Errorf("failed to build wrapped MCP image: %w", err)
+			}
+			imageName = wrappedImage
+		}
 
-		// Build launch arguments with log URL
 		logURL := os.Getenv("LOG_URL") + "/" + item.TypeID + "/logs"
-		launchArgs := append([]string{"--log-url", logURL}, LaunchArgs...)
 
-		con, err := m.containerRuntime.ContainerCreate(ctx, &container.Config{
-			Image:      image,
-			Entrypoint: []string{LaunchCommand},
-			Cmd:        append(launchArgs, args...),
-			Env:        []string{"MATHOM_ACCESS_TOKEN=" + item.ApiKey, "LOG_URL=" + logURL, "LOG_AUTH_HEADER=Bearer " + item.ApiKey},
+		// set passed through environment variables
+		envVars := []string{
+			"MATHOM_ACCESS_TOKEN=" + item.ApiKey,
+			"LOG_URL=" + logURL,
+			"LOG_AUTH_HEADER=Bearer " + item.ApiKey,
+		}
+		for key, value := range item.Env {
+			envVars = append(envVars, key+"="+value)
+		}
+
+		containerConfig := &container.Config{
+			Image: imageName,
+			Env:   envVars,
 			ExposedPorts: nat.PortSet{
 				nat.Port("80/tcp"): struct{}{},
 			},
-		}, &container.HostConfig{
+			Labels: map[string]string{},
+		}
+
+		// configure container command and entrypoint
+		if isWrappedImage {
+			containerConfig.Entrypoint = []string{"/entrypoint.sh"}
+		} else {
+			args := item.Args
+			if item.Cmd != "" {
+				args = append([]string{item.Cmd}, args...)
+			}
+			args = append(args, item.Name)
+			launchArgs := append([]string{"--log-url", logURL}, LaunchArgs...)
+			containerConfig.Entrypoint = []string{LaunchCommand}
+			containerConfig.Cmd = append(launchArgs, args...)
+		}
+
+		configHash := computeContainerConfigHash(
+			containerConfig.Image,
+			containerConfig.Cmd,
+			containerConfig.Entrypoint,
+			containerConfig.Env,
+		)
+		containerConfig.Labels["mathom.config.hash"] = configHash
+
+		// the prior ctx might have expired
+		createCtx, createCancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer createCancel()
+
+		con, err := m.containerRuntime.ContainerCreate(createCtx, containerConfig, &container.HostConfig{
 			PortBindings: nat.PortMap{
 				"80/tcp": []nat.PortBinding{
 					{
@@ -549,24 +757,69 @@ func (m *Mathom) startContainer(item *pkg.Container) error {
 			},
 		}, nil, nil, item.TypeID)
 
-		item.ContainerID = con.ID
-
 		if err != nil {
 			if !strings.Contains(err.Error(), "Conflict") {
 				return err
 			}
 
-			// check if the container is running
-			inspect, err := m.containerRuntime.ContainerInspect(ctx, item.TypeID)
+			inspect, err := m.containerRuntime.ContainerInspect(createCtx, item.TypeID)
 			if err != nil {
 				return err
 			}
-			item.ContainerID = inspect.ID
+
+			// checkc if the existing container has the same configuration
+			existingConfigHash := ""
+			if inspect.Config.Labels != nil {
+				existingConfigHash = inspect.Config.Labels["mathom.config.hash"]
+			}
+
+			if existingConfigHash != "" && existingConfigHash == configHash {
+				log.Printf("Reusing existing container %s with matching configuration", item.TypeID)
+				item.ContainerID = inspect.ID
+			} else {
+				// Use a fresh context for stopping and removing the container
+				removeCtx, removeCancel := context.WithTimeout(context.Background(), 30*time.Second)
+				defer removeCancel()
+
+				// cleanups
+				_ = m.containerRuntime.ContainerStop(removeCtx, item.TypeID, container.StopOptions{})
+				err := m.containerRuntime.ContainerRemove(removeCtx, item.TypeID, container.RemoveOptions{
+					Force: true,
+				})
+				if err != nil {
+					log.Printf("Failed to remove existing container: %v", err)
+					return err
+				}
+
+				createCtx, createCancel := context.WithTimeout(context.Background(), 30*time.Second)
+				defer createCancel()
+
+				con, err = m.containerRuntime.ContainerCreate(createCtx, containerConfig, &container.HostConfig{
+					PortBindings: nat.PortMap{
+						"80/tcp": []nat.PortBinding{
+							{
+								HostIP:   "0.0.0.0",
+								HostPort: "",
+							},
+						},
+					},
+				}, nil, nil, item.TypeID)
+				if err != nil {
+					return fmt.Errorf("creating container: %w", err)
+				}
+				item.ContainerID = con.ID
+			}
+		} else {
+			// Container created successfully
+			item.ContainerID = con.ID
 		}
 	}
 	item.StartAttempts++
 
-	err := m.containerRuntime.ContainerStart(ctx, item.ContainerID, container.StartOptions{
+	startCtx, startCancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer startCancel()
+
+	err := m.containerRuntime.ContainerStart(startCtx, item.ContainerID, container.StartOptions{
 		// CheckpointID: item.Checkpoint, // TODO: THIS
 	})
 	if err != nil {
@@ -574,17 +827,23 @@ func (m *Mathom) startContainer(item *pkg.Container) error {
 	}
 
 	// wait for container to be up
+	waitCtx, waitCancel := context.WithTimeout(context.Background(), 60*time.Second)
+	defer waitCancel()
 
 	count := 0
 	for {
-		inspect, err := m.containerRuntime.ContainerInspect(ctx, item.ContainerID)
+		inspect, err := m.containerRuntime.ContainerInspect(waitCtx, item.ContainerID)
 		if err != nil {
 			return err
 		}
 
 		if inspect.State.Running {
 			// check if container is receiving traffic
-			item.Host = fmt.Sprintf("%s:%s", inspect.NetworkSettings.Ports["80/tcp"][0].HostIP, inspect.NetworkSettings.Ports["80/tcp"][0].HostPort)
+			hostIP := inspect.NetworkSettings.Ports["80/tcp"][0].HostIP
+			if hostIP == "0.0.0.0" || hostIP == "" {
+				hostIP = "127.0.0.1"
+			}
+			item.Host = fmt.Sprintf("%s:%s", hostIP, inspect.NetworkSettings.Ports["80/tcp"][0].HostPort)
 			resp, err := m.client.Get("http://" + item.Host)
 			if err != nil {
 				time.Sleep(time.Duration(rand.Intn(250)) * time.Millisecond)

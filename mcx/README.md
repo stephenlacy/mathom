@@ -43,6 +43,9 @@ mcx my-mcp-server
 mcx @modelcontextprotocol/server-filesystem
 
 mcx my-server -- --custom-arg value
+
+
+mcx --docker mcp/github-mcp-server -e GITHUB_PERSONAL_ACCESS_TOKEN='ghp_token'
 ```
 
 You can also use the inspector:
